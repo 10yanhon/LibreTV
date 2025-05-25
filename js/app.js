@@ -1102,7 +1102,7 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
- // 弹出播放器页面
+// 弹出播放器页面
 function showVideoPlayer(url) {
     // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
@@ -1113,73 +1113,58 @@ function showVideoPlayer(url) {
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
 
-    // =======================【新增】创建 iframe 播放器===============================
-    // 用一个全局变量存储iframe，方便关闭时引用（如果你已有全局变量请替换）
+    // 在框架中打开播放页面
     videoPlayerFrame = document.createElement('iframe');
     videoPlayerFrame.id = 'VideoPlayerFrame';
     videoPlayerFrame.className = 'fixed w-full h-screen z-40';
     videoPlayerFrame.src = url;
-    videoPlayerFrame.allowFullscreen = true; // ✅【新增】允许 iframe 进入全屏
+    videoPlayerFrame.allowFullscreen = true; // ✅【新增】允许 iframe 支持全屏
     document.body.appendChild(videoPlayerFrame);
-    // ================================================================================
 
-    // =======================【新增】添加播放比例切换按钮=============================
-    let toggleBtn = document.createElement('button');
-    toggleBtn.id = 'toggleAspectBtn';
-    toggleBtn.textContent = '铺满全屏';
-    toggleBtn.style.position = 'fixed';
-    toggleBtn.style.bottom = '20px';       // 【修改】固定在屏幕底部，距离底部20px
-    toggleBtn.style.left = '50%';           // 水平居中
-    toggleBtn.style.transform = 'translateX(-50%)'; // 让按钮完全居中
-    toggleBtn.style.zIndex = '50';
-    toggleBtn.style.padding = '8px 16px';
-    toggleBtn.style.backgroundColor = '#e50914';  // Netflix红色风格
-    toggleBtn.style.color = 'white';
-    toggleBtn.style.border = 'none';
-    toggleBtn.style.borderRadius = '4px';
-    toggleBtn.style.cursor = 'pointer';
-    toggleBtn.style.fontWeight = '600';
-    document.body.appendChild(toggleBtn);
+    // ✅【新增】创建“铺满全屏”按钮
+    const toggleBtn = document.createElement('button'); // ✅【新增】
+    toggleBtn.id = 'toggleAspectBtn'; // ✅【新增】
+    toggleBtn.textContent = '铺满全屏'; // ✅【新增】
+    toggleBtn.style.position = 'fixed'; // ✅【新增】
+    toggleBtn.style.bottom = '10px'; // ✅【新增】显示在播放器底部
+    toggleBtn.style.right = '10px'; // ✅【新增】
+    toggleBtn.style.zIndex = '50'; // ✅【新增】
+    toggleBtn.style.padding = '6px 12px'; // ✅【新增】
+    toggleBtn.style.backgroundColor = '#e50914'; // ✅【新增】Netflix 红
+    toggleBtn.style.color = 'white'; // ✅【新增】
+    toggleBtn.style.border = 'none'; // ✅【新增】
+    toggleBtn.style.borderRadius = '4px'; // ✅【新增】
+    toggleBtn.style.fontSize = '14px'; // ✅【新增】
+    toggleBtn.style.cursor = 'pointer'; // ✅【新增】
+    document.body.appendChild(toggleBtn); // ✅【新增】
 
-    let isFullScreen = false; // 默认不是浏览器全屏，刚开始是“固定比例居中”
-
+    let isFullScreen = false; // ✅【新增】初始为非全屏状态
     toggleBtn.onclick = function () {
-        if (isFullScreen) {
-            // 退出全屏，恢复固定大小居中
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            videoPlayerFrame.style.width = '1280px';
-            videoPlayerFrame.style.height = '720px';
-            videoPlayerFrame.style.left = '50%';
-            videoPlayerFrame.style.top = '50%';
-            videoPlayerFrame.style.transform = 'translate(-50%, -50%)';
-            videoPlayerFrame.style.position = 'fixed';
+        const iframe = document.getElementById('VideoPlayerFrame'); // ✅【新增】
+        if (!iframe) return; // ✅【新增】
 
-            toggleBtn.textContent = '铺满全屏';
-            isFullScreen = false;
+        if (!isFullScreen) {
+            // ✅【新增】尝试横屏并全屏
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen().catch(err => console.error(err)); // ✅【新增】
+            }
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => console.warn(err)); // ✅【新增】
+            }
+            toggleBtn.textContent = '恢复比例'; // ✅【新增】
+            isFullScreen = true; // ✅【新增】
         } else {
-            // 进入浏览器全屏，铺满整个屏幕
-            if (videoPlayerFrame.requestFullscreen) {
-                videoPlayerFrame.requestFullscreen();
-            } else if (videoPlayerFrame.webkitRequestFullscreen) { /* Safari */
-                videoPlayerFrame.webkitRequestFullscreen();
-            } else if (videoPlayerFrame.msRequestFullscreen) { /* IE11 */
-                videoPlayerFrame.msRequestFullscreen();
+            // ✅【新增】退出全屏并恢复方向
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.error(err)); // ✅【新增】
             }
-
-            videoPlayerFrame.style.width = '100%';
-            videoPlayerFrame.style.height = '100vh';
-            videoPlayerFrame.style.left = '';
-            videoPlayerFrame.style.top = '';
-            videoPlayerFrame.style.transform = '';
-            videoPlayerFrame.style.position = 'fixed';
-
-            toggleBtn.textContent = '恢复比例';
-            isFullScreen = true;
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock(); // ✅【新增】
+            }
+            toggleBtn.textContent = '铺满全屏'; // ✅【新增】
+            isFullScreen = false; // ✅【新增】
         }
     };
-    // ================================================================================
 
     // 将焦点移入iframe
     videoPlayerFrame.focus();
@@ -1191,21 +1176,17 @@ function closeVideoPlayer(home = false) {
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
 
-        // ✅【新增】关闭播放器时移除比例切换按钮
+        // ✅【新增】移除“铺满全屏”按钮
         const toggleBtn = document.getElementById('toggleAspectBtn');
-        if (toggleBtn) {
-            toggleBtn.remove();
-        }
+        if (toggleBtn) toggleBtn.remove();
 
         // 恢复搜索结果显示
         document.getElementById('resultsArea').classList.remove('hidden');
-
         // 关闭播放器时也隐藏详情弹窗
         const detailModal = document.getElementById('modal');
         if (detailModal) {
             detailModal.classList.add('hidden');
         }
-
         // 如果启用豆瓣区域则显示豆瓣区域
         if (localStorage.getItem('doubanEnabled') === 'true') {
             document.getElementById('doubanArea').classList.remove('hidden');
@@ -1213,7 +1194,7 @@ function closeVideoPlayer(home = false) {
     }
     if (home) {
         // 刷新主页
-        window.location.href = '/'
+        window.location.href = '/';
     }
 }
 // 播放上一集
