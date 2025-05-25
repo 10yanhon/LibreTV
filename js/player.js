@@ -1369,3 +1369,25 @@ function closeEmbeddedPlayer() {
     }
     return false;
 }
+// ========== 新增：画面比例切换功能 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  const video = document.getElementById('videoPlayer');
+  const ratioToggleBtn = document.getElementById('ratioToggleBtn');
+
+  if (!video || !ratioToggleBtn) return;
+
+  let isFillMode = false;
+
+  ratioToggleBtn.addEventListener('click', () => {
+    if (isFillMode) {
+      video.style.objectFit = 'contain';
+      ratioToggleBtn.textContent = '⤢'; // 恢复原始比例
+    } else {
+      video.style.objectFit = 'fill';
+      ratioToggleBtn.textContent = '⤡'; // 铺满全屏
+    }
+    isFillMode = !isFillMode;
+  });
+
+  video.style.objectFit = 'contain';
+});
