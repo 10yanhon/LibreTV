@@ -1102,7 +1102,7 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
-// 弹出播放器页面
+ // 弹出播放器页面
 function showVideoPlayer(url) {
     // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
@@ -1118,6 +1118,52 @@ function showVideoPlayer(url) {
     videoPlayerFrame.className = 'fixed w-full h-screen z-40';
     videoPlayerFrame.src = url;
     document.body.appendChild(videoPlayerFrame);
+    // ✅【新增】允许 iframe 进入全屏
+    videoPlayerFrame.allowFullscreen = true;
+
+    // ✅【新增】创建播放比例切换按钮
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'toggleAspectBtn';
+    toggleBtn.textContent = '恢复比例';
+    toggleBtn.style.position = 'fixed';
+    toggleBtn.style.bottom = '20px'; // ✅ 位于底部
+    toggleBtn.style.right = '20px';  // ✅ 右侧按钮区
+    toggleBtn.style.zIndex = '50';
+    toggleBtn.style.padding = '6px 12px';
+    toggleBtn.style.backgroundColor = '#111'; // ✅ Netflix 风格深色
+    toggleBtn.style.color = '#fff';
+    toggleBtn.style.border = '1px solid #555';
+    toggleBtn.style.borderRadius = '4px';
+    toggleBtn.style.fontSize = '14px';
+    toggleBtn.style.cursor = 'pointer';
+    document.body.appendChild(toggleBtn);
+
+    // ✅【新增】切换逻辑
+    let isFullScreen = true;
+    toggleBtn.onclick = function () {
+        if (isFullScreen) {
+            // 恢复原始比例（居中显示）
+            videoPlayerFrame.style.width = '1280px';
+            videoPlayerFrame.style.height = '720px';
+            videoPlayerFrame.style.left = '50%';
+            videoPlayerFrame.style.top = '50%';
+            videoPlayerFrame.style.transform = 'translate(-50%, -50%)';
+            videoPlayerFrame.style.position = 'fixed';
+            toggleBtn.textContent = '铺满全屏';
+            isFullScreen = false;
+        } else {
+            // 铺满全屏
+            videoPlayerFrame.style.width = '100%';
+            videoPlayerFrame.style.height = '100vh';
+            videoPlayerFrame.style.left = '';
+            videoPlayerFrame.style.top = '';
+            videoPlayerFrame.style.transform = '';
+            videoPlayerFrame.style.position = 'fixed';
+            toggleBtn.textContent = '恢复比例';
+            isFullScreen = true;
+        }
+    };
+
     // 将焦点移入iframe
     videoPlayerFrame.focus();
 }
@@ -1127,6 +1173,12 @@ function closeVideoPlayer(home = false) {
     videoPlayerFrame = document.getElementById('VideoPlayerFrame');
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
+        // ✅【新增】关闭播放器时移除切换按钮
+        const toggleBtn = document.getElementById('toggleAspectBtn');
+        if (toggleBtn) {
+            toggleBtn.remove();
+        }
+
         // 恢复搜索结果显示
         document.getElementById('resultsArea').classList.remove('hidden');
         // 关闭播放器时也隐藏详情弹窗
