@@ -1109,77 +1109,101 @@ function showVideoPlayer(url) {
     if (detailModal) {
         detailModal.classList.add('hidden');
     }
+
     // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
 
     // 在框架中打开播放页面
     const videoPlayerFrame = document.createElement('iframe'); // ✅【新增】
-    videoPlayerFrame.id = 'VideoPlayerFrame';                  // ✅【新增】
+    videoPlayerFrame.id = 'VideoPlayerFrame'; // ✅【新增】
     videoPlayerFrame.className = 'fixed w-full h-screen z-40'; // ✅【新增】
-    videoPlayerFrame.src = url;                                // ✅【新增】
-    videoPlayerFrame.allowFullscreen = true;                   // ✅【新增】
-    document.body.appendChild(videoPlayerFrame);               // ✅【新增】
-
-    videoPlayerFrame.focus();
+    videoPlayerFrame.src = url;
+    videoPlayerFrame.allowFullscreen = true; // ✅【新增】
+    document.body.appendChild(videoPlayerFrame);
 
     // ✅【新增】创建“铺满全屏”按钮
-    const fullScreenBtn = document.createElement('button');
-    fullScreenBtn.innerText = '铺满全屏';
-    fullScreenBtn.className = 'fixed bottom-4 left-4 z-50 px-4 py-2 bg-black text-white rounded';
-    fullScreenBtn.style.opacity = '0.8';
+    const toggleBtn = document.createElement('button'); // ✅【新增】
+    toggleBtn.id = 'toggleAspectBtn'; // ✅【新增】
+    toggleBtn.textContent = '铺满全屏'; // ✅【新增】
+    toggleBtn.style.position = 'absolute'; // ✅【新增】
+    toggleBtn.style.bottom = '20px'; // ✅【新增】
+    toggleBtn.style.right = '20px'; // ✅【新增】
+    toggleBtn.style.zIndex = '50'; // ✅【新增】
+    toggleBtn.style.padding = '8px 14px'; // ✅【新增】
+    toggleBtn.style.backgroundColor = '#E50914'; // ✅【新增】
+    toggleBtn.style.color = '#fff'; // ✅【新增】
+    toggleBtn.style.border = 'none'; // ✅【新增】
+    toggleBtn.style.borderRadius = '4px'; // ✅【新增】
+    toggleBtn.style.fontSize = '14px'; // ✅【新增】
+    toggleBtn.style.cursor = 'pointer'; // ✅【新增】
+    document.body.appendChild(toggleBtn); // ✅【新增】
 
-    // ✅【新增】点击按钮，进入横屏全屏播放模式
-    fullScreenBtn.onclick = async () => {
-        if (videoPlayerFrame.requestFullscreen) {
-            await videoPlayerFrame.requestFullscreen(); // 进入浏览器原生全屏
-        } else if (videoPlayerFrame.webkitRequestFullscreen) {
-            await videoPlayerFrame.webkitRequestFullscreen();
-        }
-
-        // ✅【新增】尝试锁定为横屏（仅在移动设备 + HTTPS 生效）
-        if (screen.orientation && screen.orientation.lock) {
-            try {
-                await screen.orientation.lock('landscape');
-            } catch (err) {
-                console.warn('无法锁定横屏：', err);
+    // ✅【新增】点击按钮切换横屏铺满和恢复比例
+    let isFullScreen = false; // ✅【新增】
+    toggleBtn.onclick = function () {
+        const iframe = document.getElementById('VideoPlayerFrame');
+        if (!isFullScreen) {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) {
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) {
+                iframe.msRequestFullscreen();
             }
+
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {}); // ✅【新增】锁定横屏
+            }
+
+            toggleBtn.textContent = '恢复比例'; // ✅【新增】
+            isFullScreen = true;
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+
+            toggleBtn.textContent = '铺满全屏'; // ✅【新增】
+            isFullScreen = false;
         }
     };
 
-    document.body.appendChild(fullScreenBtn); // ✅【新增】
+    // 将焦点移入 iframe
+    videoPlayerFrame.focus();
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
-    }
 
-    // ✅【新增】移除“铺满全屏”按钮
-    const fullScreenBtn = document.querySelector('button');
-    if (fullScreenBtn && fullScreenBtn.innerText === '铺满全屏') {
-        fullScreenBtn.remove();
-    }
+        // ✅【新增】移除“铺满全屏”按钮
+        const toggleBtn = document.getElementById('toggleAspectBtn'); // ✅【新增】
+        if (toggleBtn) toggleBtn.remove(); // ✅【新增】
 
-    // 恢复搜索结果显示
-    document.getElementById('resultsArea').classList.remove('hidden');
+        // 恢复搜索结果显示
+        document.getElementById('resultsArea').classList.remove('hidden');
 
-    // 关闭播放器时也隐藏详情弹窗
-    const detailModal = document.getElementById('modal');
-    if (detailModal) {
-        detailModal.classList.add('hidden');
-    }
+        // 关闭播放器时也隐藏详情弹窗
+        const detailModal = document.getElementById('modal');
+        if (detailModal) {
+            detailModal.classList.add('hidden');
+        }
 
-    // 如果启用豆瓣区域则显示豆瓣区域
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-        document.getElementById('doubanArea').classList.remove('hidden');
+        // 如果启用豆瓣区域则显示豆瓣区域
+        if (localStorage.getItem('doubanEnabled') === 'true') {
+            document.getElementById('doubanArea').classList.remove('hidden');
+        }
     }
 
     if (home) {
         // 刷新主页
-        window.location.href = '/';
+        window.location.href = '/'
     }
 }
 // 播放上一集
