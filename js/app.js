@@ -1102,16 +1102,6 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
-// ✅【新增】判断是否为 iOS 设备
-function isIOS() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
-// ✅【新增】iOS 专属提示
-function showIOSFullscreenTip() {
-    alert("iOS 系统限制 iframe 无法横屏全屏，请使用 Safari 浏览器右下角原生按钮手动横屏观看。");
-}
-
 // 弹出播放器页面
 function showVideoPlayer(url) {
     // 在打开播放器前，隐藏详情弹窗
@@ -1119,80 +1109,95 @@ function showVideoPlayer(url) {
     if (detailModal) {
         detailModal.classList.add('hidden');
     }
+
     // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
+
     // 在框架中打开播放页面
-    const videoPlayerFrame = document.createElement('iframe');             // ✅【新增】将 var/let 改为 const，提升作用域安全
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    videoPlayerFrame.allowFullscreen = true;                               // ✅【新增】允许 iframe 进入全屏
-    document.body.appendChild(videoPlayerFrame);
+    const videoPlayerFrame = document.createElement('iframe'); // ✅【新增】
+    videoPlayerFrame.id = 'VideoPlayerFrame';                  // ✅【新增】
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40'; // ✅【新增】
+    videoPlayerFrame.src = url;                                // ✅【新增】
+    videoPlayerFrame.allowFullscreen = true;                   // ✅【新增】
+    document.body.appendChild(videoPlayerFrame);               // ✅【新增】
+
+    // ✅【新增】创建铺满全屏按钮，仅在横屏显示
+    const fullScreenBtn = document.createElement('button');
+    fullScreenBtn.id = 'FullScreenToggleBtn';
+    fullScreenBtn.innerHTML = `
+        <svg class="w-8 h-8" fill="white" viewBox="0 0 24 24">
+            <path d="M7 14H5v5h5v-2H7v-3zm12 5v-5h-2v3h-3v2h5zM5 5v5h2V7h3V5H5zm14 5V5h-5v2h3v3h2z"/>
+        </svg>`;
+    fullScreenBtn.className = 'fixed bottom-4 right-4 z-50 bg-black bg-opacity-50 rounded-full p-2'; // ✅【新增】
+    fullScreenBtn.style.display = 'none'; // 默认隐藏，仅在横屏中显示
+    document.body.appendChild(fullScreenBtn);
+
+    // ✅【新增】检测方向变化，横屏时显示按钮
+    function handleOrientation() {
+        if (window.innerWidth > window.innerHeight) {
+            fullScreenBtn.style.display = 'block';
+        } else {
+            fullScreenBtn.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('resize', handleOrientation);
+    handleOrientation();
+
+    // ✅【新增】iOS 提示弹窗（仅提示一次）
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS && !localStorage.getItem('iosFullScreenHintShown')) {
+        alert('📱 iOS 浏览器限制了 Web 页面自动横屏全屏。请点击右下角按钮后旋转设备，或使用“添加到主屏幕”以获得最佳体验。');
+        localStorage.setItem('iosFullScreenHintShown', 'true');
+    }
+
+    // ✅【新增】控制横屏全屏切换
+    let isFull = false;
+    fullScreenBtn.addEventListener('click', () => {
+        const frame = document.getElementById('VideoPlayerFrame');
+        if (!document.fullscreenElement) {
+            frame.requestFullscreen().then(() => {
+                isFull = true;
+            }).catch(err => console.log(err));
+        } else {
+            document.exitFullscreen().then(() => {
+                isFull = false;
+            }).catch(err => console.log(err));
+        }
+    });
+
     // 将焦点移入iframe
     videoPlayerFrame.focus();
-
-    // ✅【新增】插入“铺满全屏”按钮
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.id = 'FullscreenToggleBtn';
-    fullscreenBtn.innerHTML = '🔲'; // 可替换 SVG
-    fullscreenBtn.className = 'fixed bottom-4 right-4 z-50 bg-black bg-opacity-60 text-white px-3 py-2 rounded shadow-lg';
-    fullscreenBtn.onclick = async () => {
-        const frame = document.getElementById('VideoPlayerFrame');
-
-        if (!frame) return;
-
-        if (isIOS()) {
-            showIOSFullscreenTip(); // ✅【新增】iOS 提示
-            return;
-        }
-
-        try {
-            if (frame.requestFullscreen) {
-                await frame.requestFullscreen();
-            } else if (frame.webkitRequestFullscreen) {
-                await frame.webkitRequestFullscreen();
-            } else if (frame.msRequestFullscreen) {
-                await frame.msRequestFullscreen();
-            }
-
-            // ✅【新增】尝试锁定为横屏
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape');
-            }
-        } catch (err) {
-            console.warn('无法进入全屏或锁定横屏：', err);
-        }
-    };
-    document.body.appendChild(fullscreenBtn);
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    const videoPlayerFrame = document.getElementById('VideoPlayerFrame'); // ✅ 修正 const
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
-        // 恢复搜索结果显示
-        document.getElementById('resultsArea').classList.remove('hidden');
-        // 关闭播放器时也隐藏详情弹窗
-        const detailModal = document.getElementById('modal');
-        if (detailModal) {
-            detailModal.classList.add('hidden');
-        }
-        // 如果启用豆瓣区域则显示豆瓣区域
-        if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
-        }
     }
+
+    const fullScreenBtn = document.getElementById('FullScreenToggleBtn'); // ✅【新增】
+    if (fullScreenBtn) fullScreenBtn.remove();                             // ✅【新增】
+
+    // 恢复搜索结果显示
+    document.getElementById('resultsArea').classList.remove('hidden');
+
+    // 关闭播放器时也隐藏详情弹窗
+    const detailModal = document.getElementById('modal');
+    if (detailModal) {
+        detailModal.classList.add('hidden');
+    }
+
+    // 如果启用豆瓣区域则显示豆瓣区域
+    if (localStorage.getItem('doubanEnabled') === 'true') {
+        document.getElementById('doubanArea').classList.remove('hidden');
+    }
+
     if (home) {
         // 刷新主页
         window.location.href = '/';
-    }
-
-    // ✅【新增】移除“铺满全屏”按钮
-    const fullscreenBtn = document.getElementById('FullscreenToggleBtn');
-    if (fullscreenBtn) {
-        fullscreenBtn.remove();
     }
 }               
 // 播放上一集
