@@ -1102,149 +1102,119 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
-// 原始函数保持不变，只新增修改部分
-// ================ 弹出播放器页面 ================
+// 弹出播放器页面（核心逻辑不变）
 function showVideoPlayer(url) {
-    // [保留] 原有隐藏逻辑
-    closeVideoPlayer();
-    document.getElementById('resultsArea').classList.add('hidden');
-    document.getElementById('doubanArea').classList.add('hidden');
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
+    // ...原有隐藏其他元素的逻辑...
 
-    // [新增] iOS设备提示
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isIOS) {
-        const tip = document.createElement('div');
-        tip.textContent = '👆 双指旋转屏幕切换方向';
-        tip.style.cssText = 'position:fixed;bottom:80px;color:white;text-align:center;width:100%;z-index:50;';
-        document.body.appendChild(tip);
-        setTimeout(() => tip.remove(), 3000);
-    }
-
-    // [保留] 创建iframe逻辑
     const videoPlayerFrame = document.createElement('iframe');
-    // ...原有iframe创建代码不变...
+    videoPlayerFrame.id = 'VideoPlayerFrame';
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
+    videoPlayerFrame.src = url;
+    
+    // ✅ [兼容性修复] 增加权限策略
+    videoPlayerFrame.allow = "fullscreen; accelerometer; gyroscope";
+    
     document.body.appendChild(videoPlayerFrame);
-    
-    // [修改] 调用新版全屏按钮
-    addFullscreenButton();
+
+    // ✅ [逻辑修复] 延迟初始化按钮
+    videoPlayerFrame.onload = () => {
+        // 确保iframe加载完成后再添加控件
+        addFullscreenController();
+    };
 }
 
-// ================ 关闭播放器页面 ================
-function closeVideoPlayer(home = false) {
-    // [保留] 原有移除逻辑
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) videoPlayerFrame.remove();
+// ✅ [结构优化] 全屏控制器模块
+const fullscreenController = {
+    btn: null,
+    isActive: false,
 
-    // [修改] 增强按钮移除逻辑
-    const fsBtn = document.getElementById('FullscreenToggleBtn');
-    if (fsBtn) {
-        // [新增] 移除事件监听
-        window.removeEventListener('orientationchange', fsBtn._orientationHandler);
-        document.removeEventListener('fullscreenchange', fsBtn._fullscreenHandler);
-        fsBtn.remove();
-    }
-
-    // [保留] 原有界面还原逻辑
-    document.getElementById('resultsArea').classList.remove('hidden');
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-        document.getElementById('doubanArea').classList.remove('hidden');
-    }
-    if (document.fullscreenElement) document.exitFullscreen();
-    if (home) window.location.href = '/';
-}
-
-// ================ 全屏按钮管理（核心修改）=============== 
-function addFullscreenButton() {
-    // [修改] 设备检测常量
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-
-    // [保留] 移除已存在按钮
-    const existingBtn = document.getElementById('FullscreenToggleBtn');
-    if (existingBtn) existingBtn.remove();
-
-    // [修改] 按钮初始化设置
-    const btn = document.createElement('button');
-    btn.id = 'FullscreenToggleBtn';
-    btn.className = 'fixed bottom-4 right-4 z-50 p-2 bg-black bg-opacity-50 rounded-full text-white';
-    btn.innerHTML = `...原有SVG代码...`;
-    btn.style.display = 'none'; // 默认隐藏
-
-    // [新增] 复合可见性判断
-    const updateVisibility = () => {
-        let shouldShow = false;
+    init() {
+        if (this.btn) return;
         
-        // Android/桌面端检测逻辑
-        if (!isIOS) {
-            shouldShow = !!document.fullscreenElement && 
-                       window.matchMedia("(orientation: landscape)").matches;
-        }
-        // iOS专用检测
-        else if (window.orientation !== undefined) {
-            shouldShow = Math.abs(window.orientation) === 90;
-        }
+        // 创建按钮
+        this.btn = document.createElement('button');
+        this.btn.id = 'FullscreenCtrlBtn';
+        this.btn.className = 'fixed bottom-4 right-4 z-50 p-2 bg-black/50 rounded-full text-white';
+        this.btn.innerHTML = `⛶`; // 简化图标
+        
+        // 事件绑定
+        this.btn.onclick = () => this.toggle();
+        
+        // 初始隐藏
+        this.btn.style.display = 'none';
+        document.body.appendChild(this.btn);
+    },
 
-        btn.style.display = shouldShow ? 'block' : 'none';
-    };
-
-    // [新增] 全屏变化处理器
-    const fullscreenHandler = () => {
-        updateVisibility();
-        if (!isIOS && document.fullscreenElement && screen.orientation?.lock) {
-            screen.orientation.lock('landscape').catch(console.debug);
-        }
-    };
-
-    // [修改] 事件监听配置
-    const orientationHandler = isIOS ? 
-        () => setTimeout(updateVisibility, 300) : // iOS延迟处理
-        updateVisibility;
-
-    window.addEventListener('orientationchange', orientationHandler);
-    document.addEventListener('fullscreenchange', fullscreenHandler);
-    
-    // [新增] 保存引用到按钮对象
-    btn._orientationHandler = orientationHandler;
-    btn._fullscreenHandler = fullscreenHandler;
-
-    // [修改] 点击事件处理
-    btn.onclick = () => {
+    toggle() {
         const iframe = document.getElementById('VideoPlayerFrame');
-        if (!document.fullscreenElement) {
-            // iOS特殊处理
-            if (isIOS) {
-                const video = iframe.contentDocument?.querySelector('video');
-                if (video?.webkitEnterFullscreen) {
-                    video.webkitEnterFullscreen();
-                }
-            } 
-            // Android/桌面处理
-            else {
-                iframe.requestFullscreen().then(() => {
-                    if (screen.orientation?.lock) {
-                        screen.orientation.lock('landscape');
-                    }
-                });
-            }
-        } else {
-            document.exitFullscreen();
-        }
-    };
+        if (!iframe) return;
 
-    // [新增] 初始可见性检查
-    setTimeout(updateVisibility, 500);
-    document.body.appendChild(btn);
+        // 状态切换逻辑
+        if (!document.fullscreenElement) {
+            this.enterFullscreen(iframe);
+        } else {
+            this.exitFullscreen();
+        }
+    },
+
+    async enterFullscreen(iframe) {
+        try {
+            await iframe.requestFullscreen();
+            
+            // ✅ [横屏优化] 自然横屏处理
+            if (window.screen.orientation?.lock) {
+                await screen.orientation.lock('landscape');
+            } else {
+                // 备用横屏方案
+                await window.matchMedia("(orientation: landscape)");
+            }
+            
+            this.updateVisibility();
+        } catch (error) {
+            console.error('全屏切换失败:', error);
+            this.btn.style.display = 'none';
+        }
+    },
+
+    exitFullscreen() {
+        document.exitFullscreen();
+        if (screen.orientation?.unlock) {
+            screen.orientation.unlock();
+        }
+        this.updateVisibility();
+    },
+
+    updateVisibility() {
+        // ✅ [逻辑修正] 仅在横屏全屏时显示
+        const shouldShow = document.fullscreenElement && 
+                         window.matchMedia("(orientation: landscape)").matches;
+        
+        this.btn.style.display = shouldShow ? 'block' : 'none';
+    }
+};
+
+// ✅ [事件整合] 统一事件监听
+function addFullscreenController() {
+    fullscreenController.init();
+    
+    const events = ['resize', 'orientationchange', 'fullscreenchange'];
+    events.forEach(e => {
+        window.addEventListener(e, () => {
+            setTimeout(fullscreenController.updateVisibility, 100);
+        });
+    });
 }
 
-// ================ 全局事件监听 ================
-// [新增] 全屏状态同步监听
-document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && screen.orientation?.unlock) {
-        screen.orientation.unlock();
+// 关闭播放器页面
+function closeVideoPlayer(home = false) {
+    // ...原有逻辑...
+
+    // ✅ [资源释放] 清理控制器
+    if (fullscreenController.btn) {
+        fullscreenController.btn.remove();
+        fullscreenController.btn = null;
     }
-});
+}
 // 播放上一集
 function playPreviousEpisode(sourceCode) {
     if (currentEpisodeIndex > 0) {
