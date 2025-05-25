@@ -1104,97 +1104,94 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
 
  // 弹出播放器页面
 function showVideoPlayer(url) {
-    // 在打开播放器前，隐藏详情弹窗
-    const detailModal = document.getElementById('modal');
-    if (detailModal) {
-        detailModal.classList.add('hidden');
-    }
-    // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
-    document.getElementById('resultsArea').classList.add('hidden');
-    document.getElementById('doubanArea').classList.add('hidden');
-    // 在框架中打开播放页面
-    videoPlayerFrame = document.createElement('iframe');
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    document.body.appendChild(videoPlayerFrame);
-    // ✅【新增】允许 iframe 进入全屏
-    videoPlayerFrame.allowFullscreen = true;
+   // 在打开播放器前，隐藏详情弹窗
+   const detailModal = document.getElementById('modal');
+   if (detailModal) {
+       detailModal.classList.add('hidden');
+   }
+   // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
+   document.getElementById('resultsArea').classList.add('hidden');
+   document.getElementById('doubanArea').classList.add('hidden');
 
-    // ✅【新增】创建播放比例切换按钮
-    const toggleBtn = document.createElement('button');
-    toggleBtn.id = 'toggleAspectBtn';
-    toggleBtn.textContent = '恢复比例';
-    toggleBtn.style.position = 'fixed';
-    toggleBtn.style.bottom = '20px'; // ✅ 位于底部
-    toggleBtn.style.right = '20px';  // ✅ 右侧按钮区
-    toggleBtn.style.zIndex = '50';
-    toggleBtn.style.padding = '6px 12px';
-    toggleBtn.style.backgroundColor = '#111'; // ✅ Netflix 风格深色
-    toggleBtn.style.color = '#fff';
-    toggleBtn.style.border = '1px solid #555';
-    toggleBtn.style.borderRadius = '4px';
-    toggleBtn.style.fontSize = '14px';
-    toggleBtn.style.cursor = 'pointer';
-    document.body.appendChild(toggleBtn);
+   // 在框架中打开播放页面
+   const videoPlayerFrame = document.createElement('iframe');                  // 【新增】第一个字母
+   videoPlayerFrame.id = 'VideoPlayerFrame';                                   
+   videoPlayerFrame.className = 'fixed w-full h-screen z-40';                  
+   videoPlayerFrame.src = url;                                                 
+   videoPlayerFrame.allowFullscreen = true;                                    
+   document.body.appendChild(videoPlayerFrame);                               
 
-    // ✅【新增】切换逻辑
-    let isFullScreen = true;
-    toggleBtn.onclick = function () {
-        if (isFullScreen) {
-            // 恢复原始比例（居中显示）
-            videoPlayerFrame.style.width = '1280px';
-            videoPlayerFrame.style.height = '720px';
-            videoPlayerFrame.style.left = '50%';
-            videoPlayerFrame.style.top = '50%';
-            videoPlayerFrame.style.transform = 'translate(-50%, -50%)';
-            videoPlayerFrame.style.position = 'fixed';
-            toggleBtn.textContent = '铺满全屏';
-            isFullScreen = false;
-        } else {
-            // 铺满全屏
-            videoPlayerFrame.style.width = '100%';
-            videoPlayerFrame.style.height = '100vh';
-            videoPlayerFrame.style.left = '';
-            videoPlayerFrame.style.top = '';
-            videoPlayerFrame.style.transform = '';
-            videoPlayerFrame.style.position = 'fixed';
-            toggleBtn.textContent = '恢复比例';
-            isFullScreen = true;
-        }
-    };
+   // 【新增】创建“播放比例切换”按钮
+   const toggleBtn = document.createElement('button');                         // 【新增】
+   toggleBtn.id = 'toggleAspectBtn';                                           // 【新增】
+   toggleBtn.textContent = '铺满全屏';                                          // 【新增】
+   toggleBtn.style.position = 'fixed';                                         // 【新增】
+   toggleBtn.style.bottom = '60px';                                            // 【新增】显示在屏幕底部，与控制按钮对齐
+   toggleBtn.style.left = '50%';                                               // 【新增】
+   toggleBtn.style.transform = 'translateX(-50%)';                             // 【新增】
+   toggleBtn.style.zIndex = '50';                                              // 【新增】
+   toggleBtn.style.padding = '8px 16px';                                       // 【新增】
+   toggleBtn.style.backgroundColor = 'rgba(0,0,0,0.6)';                         // 【新增】Netflix 风格透明按钮
+   toggleBtn.style.color = 'white';                                            // 【新增】
+   toggleBtn.style.border = '1px solid rgba(255,255,255,0.4)';                 // 【新增】
+   toggleBtn.style.borderRadius = '4px';                                       // 【新增】
+   toggleBtn.style.cursor = 'pointer';                                         // 【新增】
+   document.body.appendChild(toggleBtn);                                       // 【新增】
 
-    // 将焦点移入iframe
-    videoPlayerFrame.focus();
+   let isFullScreen = true;                                                    // 【新增】
+   toggleBtn.onclick = function () {                                           // 【新增】
+       if (isFullScreen) {
+           // 恢复原始比例
+           videoPlayerFrame.style.width = '1280px';                            // 【新增】
+           videoPlayerFrame.style.height = '720px';                            // 【新增】
+           videoPlayerFrame.style.left = '50%';                                // 【新增】
+           videoPlayerFrame.style.top = '50%';                                 // 【新增】
+           videoPlayerFrame.style.transform = 'translate(-50%, -50%)';        // 【新增】
+           videoPlayerFrame.style.position = 'fixed';                          // 【新增】
+           toggleBtn.textContent = '铺满全屏';                                  // 【新增】
+           isFullScreen = false;                                               // 【新增】
+       } else {
+           // 铺满全屏
+           videoPlayerFrame.style.width = '100%';                              // 【新增】
+           videoPlayerFrame.style.height = '100vh';                            // 【新增】
+           videoPlayerFrame.style.left = '';                                   // 【新增】
+           videoPlayerFrame.style.top = '';                                    // 【新增】
+           videoPlayerFrame.style.transform = '';                              // 【新增】
+           videoPlayerFrame.style.position = 'fixed';                          // 【新增】
+           toggleBtn.textContent = '恢复比例';                                  // 【新增】
+           isFullScreen = true;                                                // 【新增】
+       }
+   };
+
+   // 将焦点移入iframe
+   videoPlayerFrame.focus();
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) {
-        videoPlayerFrame.remove();
-        // ✅【新增】关闭播放器时移除切换按钮
-        const toggleBtn = document.getElementById('toggleAspectBtn');
-        if (toggleBtn) {
-            toggleBtn.remove();
-        }
+   const videoPlayerFrame = document.getElementById('VideoPlayerFrame');       // 【新增】第一个字母
+   if (videoPlayerFrame) {
+       videoPlayerFrame.remove();
+       // 【新增】关闭播放器时移除“播放比例切换”按钮
+       const toggleBtn = document.getElementById('toggleAspectBtn');           // 【新增】
+       if (toggleBtn) toggleBtn.remove();                                      // 【新增】
 
-        // 恢复搜索结果显示
-        document.getElementById('resultsArea').classList.remove('hidden');
-        // 关闭播放器时也隐藏详情弹窗
-        const detailModal = document.getElementById('modal');
-        if (detailModal) {
-            detailModal.classList.add('hidden');
-        }
-        // 如果启用豆瓣区域则显示豆瓣区域
-        if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
-        }
-    }
-    if (home) {
-        // 刷新主页
-        window.location.href = '/'
-    }
+       // 恢复搜索结果显示
+       document.getElementById('resultsArea').classList.remove('hidden');
+       // 关闭播放器时也隐藏详情弹窗
+       const detailModal = document.getElementById('modal');
+       if (detailModal) {
+           detailModal.classList.add('hidden');
+       }
+       // 如果启用豆瓣区域则显示豆瓣区域
+       if (localStorage.getItem('doubanEnabled') === 'true') {
+           document.getElementById('doubanArea').classList.remove('hidden');
+       }
+   }
+   if (home) {
+       // 刷新主页
+       window.location.href = '/';
+   }
 }
 
 // 播放上一集
