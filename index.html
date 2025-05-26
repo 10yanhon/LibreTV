@@ -422,6 +422,67 @@
 
     <!-- 环境变量注入脚本 -->
     <script>
+// ✅【新增】判断是否横屏
+function isLandscape() {
+    return window.matchMedia("(orientation: landscape)").matches;
+}
+
+// ✅【新增】控制按钮图标（放大 ⛶ 与退出 🡸）
+function updateButtonIcon() {
+    const btn = document.getElementById('FullFillButton');
+    if (!btn) return;
+    btn.innerHTML = isFullFilled ? '🡸' : '⛶';
+}
+
+// ✅【新增】进入铺满 + 横屏锁定 + 沉浸式
+async function enterFullFilled() {
+    const iframe = document.getElementById('VideoPlayerFrame');
+    if (!iframe) return;
+
+    try {
+        await iframe.requestFullscreen();
+        if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape');
+        }
+        isFullFilled = true;
+        updateButtonIcon();
+    } catch (err) {
+        alert('无法进入全屏，可能受到浏览器限制');
+    }
+}
+
+// ✅【新增】退出铺满全屏
+async function exitFullFilled() {
+    if (document.fullscreenElement) {
+        await document.exitFullscreen();
+    }
+    if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+    }
+    isFullFilled = false;
+    updateButtonIcon();
+}
+
+// ✅【新增】切换按钮行为
+function toggleFullFill() {
+    if (!isLandscape()) {
+        alert('请横屏后再点击该按钮');
+        return;
+    }
+    isFullFilled ? exitFullFilled() : enterFullFilled();
+}
+
+// ✅【新增】屏幕旋转时控制按钮显隐
+function showOrHideFullButton() {
+    const btn = document.getElementById('FullFillButton');
+    if (!btn) return;
+    btn.style.display = isLandscape() ? 'block' : 'none';
+}
+
+// ✅【新增】用于记录当前状态
+let isFullFilled = false;
+</script>
+    <script>
         // 创建全局环境变量对象
         window.__ENV__ = window.__ENV__ || {};
         
