@@ -432,7 +432,7 @@ function updateButtonIcon() {
     btn.innerHTML = isFullFilled ? '🡸' : '⛶';
 }
 
-// ✅【新增】进入铺满 + 横屏锁定 + 沉浸式
+// ✅【修改】进入铺满 + 横屏锁定 + 加类控制视觉
 async function enterFullFilled() {
     const iframe = document.getElementById('VideoPlayerFrame');
     if (!iframe) return;
@@ -442,6 +442,10 @@ async function enterFullFilled() {
         if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
         }
+
+        // ✅【新增】给 iframe 内部添加 fullfilled 类
+        iframe.contentWindow.document.documentElement.classList.add('fullfilled');
+
         isFullFilled = true;
         updateButtonIcon();
     } catch (err) {
@@ -449,14 +453,21 @@ async function enterFullFilled() {
     }
 }
 
-// ✅【新增】退出铺满全屏
+// ✅【修改】退出铺满时移除视觉样式
 async function exitFullFilled() {
+    const iframe = document.getElementById('VideoPlayerFrame');
+    if (!iframe) return;
+
     if (document.fullscreenElement) {
         await document.exitFullscreen();
     }
     if (screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
     }
+
+    // ✅【新增】移除 iframe 中的视觉铺满类
+    iframe.contentWindow.document.documentElement.classList.remove('fullfilled');
+
     isFullFilled = false;
     updateButtonIcon();
 }
