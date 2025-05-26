@@ -1102,102 +1102,161 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
+// === 播放器控制相关代码 ===
+
+// 是否是 iOS 设备
+function isIOS() {
+ return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// 记录 iframe 对象
+let videoPlayerFrame = null;
+
 // 弹出播放器页面
 function showVideoPlayer(url) {
-    const detailModal = document.getElementById('modal');
-    if (detailModal) {
-        detailModal.classList.add('hidden');
-    }
-    document.getElementById('resultsArea').classList.add('hidden');
-    document.getElementById('doubanArea').classList.add('hidden');
+ // 在打开播放器前，隐藏详情弹窗
+ const detailModal = document.getElementById('modal');
+ if (detailModal) {
+   detailModal.classList.add('hidden');
+ }
+ // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
+ document.getElementById('resultsArea').classList.add('hidden');
+ document.getElementById('doubanArea').classList.add('hidden');
 
-    const videoPlayerFrame = document.createElement('iframe'); // ✅【新增】
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    videoPlayerFrame.allowFullscreen = true; // ✅【新增】
-    document.body.appendChild(videoPlayerFrame);
-    videoPlayerFrame.focus();
+ // 在框架中打开播放页面  【新增】增加 allowfullscreen 属性确保允许全屏
+ videoPlayerFrame = document.createElement('iframe');              // 【新增】
+ videoPlayerFrame.id = 'VideoPlayerFrame';                          // 【新增】
+ videoPlayerFrame.className = 'fixed w-full h-screen z-40';         // 【新增】
+ videoPlayerFrame.src = url;                                        // 【新增】
+ videoPlayerFrame.setAttribute('allowfullscreen', '');              // 【新增】
+ videoPlayerFrame.setAttribute('allow', 'fullscreen');              // 【新增】
+ document.body.appendChild(videoPlayerFrame);                       // 【新增】
 
-    addFullscreenButton(); // ✅【新增】添加铺满全屏按钮
+ // 将焦点移入iframe
+ videoPlayerFrame.focus();
+
+ // 监听屏幕方向变化，控制按钮显示
+ setupOrientationListener();
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) {
-        videoPlayerFrame.remove();
-        document.getElementById('resultsArea').classList.remove('hidden');
-        const detailModal = document.getElementById('modal');
-        if (detailModal) {
-            detailModal.classList.add('hidden');
-        }
-        if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
-        }
-    }
-
-    const fsBtn = document.getElementById('FullscreenToggleBtn'); // ✅【新增】
-    if (fsBtn) fsBtn.remove(); // ✅【新增】
-
-    if (home) window.location.href = '/';
+ videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+ if (videoPlayerFrame) {
+   videoPlayerFrame.remove();
+   // 恢复搜索结果显示
+   document.getElementById('resultsArea').classList.remove('hidden');
+   // 关闭播放器时也隐藏详情弹窗
+   const detailModal = document.getElementById('modal');
+   if (detailModal) {
+     detailModal.classList.add('hidden');
+   }
+   // 如果启用豆瓣区域则显示豆瓣区域
+   if (localStorage.getItem('doubanEnabled') === 'true') {
+     document.getElementById('doubanArea').classList.remove('hidden');
+   }
+ }
+ if (home) {
+   // 刷新主页
+   window.location.href = '/';
+ }
 }
 
-// ✅【新增】添加铺满全屏按钮
-function addFullscreenButton() {
-    const btn = document.createElement('button');
-    btn.id = 'FullscreenToggleBtn';
-    btn.className = 'fixed bottom-4 right-4 z-50 p-2 bg-black bg-opacity-50 rounded-full text-white';
-    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3m0-8V5a2 2 0 0 0-2-2h-3"/>
-    </svg>`;
-    btn.onclick = toggleFullscreen;
+// 【新增】创建“铺满全屏”按钮
+const fullBtn = document.createElement('button');
+fullBtn.id = 'fullScreenBtn';
+fullBtn.style.position = 'fixed';
+fullBtn.style.bottom = '80px';
+fullBtn.style.right = '20px';
+fullBtn.style.zIndex = '1000';
+fullBtn.style.background = 'rgba(32,32,32,0.75)';
+fullBtn.style.borderRadius = '50%';
+fullBtn.style.width = '48px';
+fullBtn.style.height = '48px';
+fullBtn.style.fontSize = '24px';
+fullBtn.style.display = 'flex';
+fullBtn.style.alignItems = 'center';
+fullBtn.style.justifyContent = 'center';
+fullBtn.style.cursor = 'pointer';
+fullBtn.style.opacity = '0.7';
+fullBtn.style.transition = 'opacity 0.3s, transform 0.3s';
+fullBtn.style.userSelect = 'none';
+fullBtn.title = '铺满全屏 (横屏模式)';
 
-    // ✅【新增】仅横屏显示按钮
-    function updateButtonVisibility() {
-        if (window.matchMedia("(orientation: landscape)").matches) {
-            btn.style.display = 'block';
-        } else {
-            btn.style.display = 'none';
-        }
-    }
+// SVG 图标 - Netflix风格
+fullBtn.innerHTML = `
+ <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;">
+   <polyline points="4 4 10 4 10 10"></polyline>
+   <polyline points="20 20 14 20 14 14"></polyline>
+   <line x1="14" y1="10" x2="20" y2="4"></line>
+   <line x1="4" y1="20" x2="10" y2="14"></line>
+ </svg>
+`;
 
-    window.addEventListener('orientationchange', updateButtonVisibility);
-    updateButtonVisibility();
+fullBtn.addEventListener('mouseenter', () => {
+ fullBtn.style.opacity = '1';
+ fullBtn.style.transform = 'scale(1.1)';
+});
+fullBtn.addEventListener('mouseleave', () => {
+ fullBtn.style.opacity = '0.7';
+ fullBtn.style.transform = 'scale(1)';
+});
 
-    document.body.appendChild(btn);
+// 仅横屏时显示按钮
+function setupOrientationListener() {
+ function updateButtonVisibility() {
+   if (window.matchMedia("(orientation: landscape)").matches) {
+     if (!document.body.contains(fullBtn)) {
+       document.body.appendChild(fullBtn);
+     }
+   } else {
+     if (document.body.contains(fullBtn)) {
+       document.body.removeChild(fullBtn);
+     }
+     // 退出全屏时解除锁定横屏
+     if (document.fullscreenElement == null) {
+       if (screen.orientation && screen.orientation.unlock) {
+         screen.orientation.unlock();
+       }
+     }
+   }
+ }
+
+ updateButtonVisibility();
+ window.addEventListener('orientationchange', updateButtonVisibility);
+ window.addEventListener('resize', updateButtonVisibility);
 }
 
-// ✅【新增】控制全屏与退出逻辑
-let isFullscreen = false;
+// 【新增】点击按钮切换横屏铺满全屏
+fullBtn.addEventListener('click', async () => {
+ if (isIOS()) {
+   alert('iOS浏览器全屏功能支持有限，建议使用安卓设备或桌面浏览器体验更佳。');
+   return;
+ }
+ try {
+   // 先锁定横屏
+   if (screen.orientation && screen.orientation.lock) {
+     await screen.orientation.lock('landscape');
+   }
+   // 请求全屏 iframe 内的 video 元素
+   // 因为 iframe 是跨域限制，先尝试对 iframe 请求全屏
+   if (videoPlayerFrame.requestFullscreen) {
+     await videoPlayerFrame.requestFullscreen();
+   } else if (videoPlayerFrame.webkitRequestFullscreen) { // Safari
+     await videoPlayerFrame.webkitRequestFullscreen();
+   } else {
+     alert('您的浏览器不支持全屏API');
+     return;
+   }
+ } catch (e) {
+   console.warn('锁定横屏或请求全屏失败:', e);
+ }
+});
 
-function toggleFullscreen() {
-    const iframe = document.getElementById('VideoPlayerFrame');
-    if (!iframe) return;
-
-    if (!isFullscreen) {
-        // ✅【新增】先全屏再横屏
-        if (iframe.requestFullscreen) {
-            iframe.requestFullscreen().then(() => {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('landscape').catch(err => {
-                        alert('⚠️ 当前浏览器不支持强制横屏');
-                    });
-                }
-            });
-        }
-    } else {
-        // ✅【新增】退出全屏并解锁横屏
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        }
-        if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-        }
-    }
-
-    isFullscreen = !isFullscreen;
-}
+// 页面加载后，监听横竖屏，按钮显示控制
+window.addEventListener('load', () => {
+ setupOrientationListener();
+});
 // 播放上一集
 function playPreviousEpisode(sourceCode) {
     if (currentEpisodeIndex > 0) {
