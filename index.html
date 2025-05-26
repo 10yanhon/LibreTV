@@ -438,9 +438,9 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
     <script>
-// ✅【新增】判断是否横屏
+// ✅【新增】判断是否为横屏状态(强兼容)
 function isLandscape() {
-    return window.matchMedia("(orientation: landscape)").matches;
+    return window.innerwidth>window.innerheight;
 }
 
 // ✅【新增】当前是否处于“拉满状态”
