@@ -394,23 +394,54 @@ body.fullfilled .art-video-player.art-playing video {
             });
         });
     <script>
-window.addEventListener('message', (event) => {
-    console.log('[player.html] 收到消息：', event.data); // ✅ 关键调试日志
+function showToast(message) {
+    let toast = document.getElementById('debugToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'debugToast';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = 'rgba(0,0,0,0.7)';
+        toast.style.color = '#fff';
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '10px';
+        toast.style.zIndex = '9999';
+        document.body.appendChild(toast);
+    }
+    toast.innerText = message;
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 2000);
+}
 
+window.addEventListener('message', (event) => {
     if (!event.data || !event.data.type) return;
 
     const video = document.querySelector('video');
     if (!video) {
-        console.warn('[player.html] 找不到 video 元素');
+        showToast('❌ 找不到 <video> 元素');
         return;
     }
 
     if (event.data.type === 'setObjectFitCover') {
-        console.log('[player.html] 设置 object-fit: cover');
         video.style.objectFit = 'cover';
+        video.style.width = '100vw'; // 补充保证拉满
+        video.style.height = '100vh'; // 补充保证拉满
+        video.style.position = 'absolute'; // 有些播放器会用 relative 包裹
+        video.style.top = '0';
+        video.style.left = '0';
+        showToast('✅ 拉满模式已触发');
     } else if (event.data.type === 'resetObjectFit') {
-        console.log('[player.html] 恢复 object-fit 默认');
         video.style.objectFit = '';
+        video.style.width = '';
+        video.style.height = '';
+        video.style.position = '';
+        video.style.top = '';
+        video.style.left = '';
+        showToast('🔄 退出拉满模式');
     }
 });
 </script>
