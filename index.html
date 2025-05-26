@@ -464,7 +464,7 @@ async function enterFullFilled() {
             await screen.orientation.lock('landscape');
         }
 
-        // ✅【新增】告诉 iframe 内部的页面：应用 object-fit: cover
+        // ✅【新增】发送消息给 iframe 视觉铺满
         iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
 
         isFullFilled = true;
@@ -476,13 +476,22 @@ async function enterFullFilled() {
 
 // ✅【新增】退出铺满状态
 async function exitFullFilled() {
+    const iframe = document.getElementById('VideoPlayerFrame');
     if (document.fullscreenElement) {
         await document.exitFullscreen();
     }
-
     if (screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
     }
+
+    // ✅【新增】退出时恢复 object-fit 默认
+    if (iframe) {
+        iframe.contentWindow.postMessage({ type: 'resetObjectFit' }, '*');
+    }
+
+    isFullFilled = false;
+    updateButtonIcon();
+}
 
     // ✅【新增】告诉 iframe 内部的页面：恢复 object-fit
     const iframe = document.getElementById('VideoPlayerFrame');
