@@ -1104,34 +1104,39 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
 
 // 弹出播放器页面
 function showVideoPlayer(url) {
-    // ✅【新增】创建“铺满全屏”按钮
-const fullBtn = document.createElement('button');
-fullBtn.id = 'FullFillButton';
-fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
-fullBtn.style.display = isLandscape() ? 'block' : 'none';
-fullBtn.innerHTML = '⛶';
-fullBtn.onclick = toggleFullFill;
-document.body.appendChild(fullBtn);
-
-// ✅【新增】监听屏幕旋转控制按钮显隐
-window.addEventListener('orientationchange', showOrHideFullButton);
-window.addEventListener('resize', showOrHideFullButton);
     // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
     if (detailModal) {
         detailModal.classList.add('hidden');
     }
+
     // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
+
     // 在框架中打开播放页面
     videoPlayerFrame = document.createElement('iframe');
     videoPlayerFrame.id = 'VideoPlayerFrame';
     videoPlayerFrame.className = 'fixed w-full h-screen z-40';
     videoPlayerFrame.src = url;
     document.body.appendChild(videoPlayerFrame);
-    // 将焦点移入iframe
     videoPlayerFrame.focus();
+
+    // ✅【新增】创建“铺满全屏”按钮（先创建再隐藏）
+    const fullBtn = document.createElement('button');
+    fullBtn.id = 'FullFillButton';
+    fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
+    fullBtn.style.display = 'none'; // 默认隐藏
+    fullBtn.innerHTML = '⛶';
+    fullBtn.onclick = toggleFullFill;
+    document.body.appendChild(fullBtn);
+
+    // ✅【新增】监听屏幕旋转控制按钮显隐
+    window.addEventListener('orientationchange', showOrHideFullButton);
+    window.addEventListener('resize', showOrHideFullButton);
+
+    // ✅【新增】首次进入播放器时就判断当前屏幕是否横屏
+    showOrHideFullButton();
 }
 
 // 关闭播放器页面
