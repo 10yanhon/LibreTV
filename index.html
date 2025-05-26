@@ -510,6 +510,7 @@ function toggleFullFill() {
         return;
     }
 function showOrHideFullButton() {
+    console.log('当前是否横屏:', isLandscape());
     const btn = document.getElementById('FullFillButton');
     if (!btn) return;
     // ✅ 只有横屏才显示
