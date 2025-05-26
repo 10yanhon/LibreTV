@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+    <style>
+  /* ✅【新增】仅在拉满全屏状态下视觉铺满 */
+  .fullfilled .art-video-player.art-playing video {
+    object-fit: cover !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: black;
+  }
+</style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="same-origin">
