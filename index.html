@@ -1,171 +1,123 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
- <meta charset="UTF-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
- <title>视频播放器示例</title>
- <style>
-   /* 原有样式 不动 */
-   body, html {
-     margin: 0;
-     padding: 0;
-     background: black;
-     height: 100%;
-     overflow: hidden;
-     display: flex;
-     justify-content: center;
-     align-items: center;
-   }
-   #player-container {
-     position: relative;
-     width: 100%;
-     max-width: 600px;
-     background: black;
-   }
-   video {
-     width: 100%;
-     height: auto;
-     display: block;
-   }
+<!-- 视频播放器容器 -->
+<div id="playerContainer" style="position: relative;">
+ <video id="videoPlayer" width="360" height="640" controls playsinline>
+   <source src="your-video.mp4" type="video/mp4" />
+   您的浏览器不支持 video 标签。
+ </video>
 
-   /* 新增：铺满全屏按钮样式，类似Netflix横屏按钮 */
-   #fullscreen-landscape-btn {
-     position: absolute;
-     bottom: 12px;
-     right: 12px;
-     background: rgba(0,0,0,0.6);
-     border: none;
-     color: white;
-     font-size: 14px;
-     padding: 8px 14px;
-     border-radius: 4px;
-     cursor: pointer;
-     font-family: Arial, sans-serif;
-     transition: background 0.3s;
-     z-index: 9999;
-     user-select: none;
-   }
-   #fullscreen-landscape-btn:hover {
-     background: rgba(255,255,255,0.2);
-   }
+ <!-- 原有放大按钮 -->
+ <button id="expandBtn" style="position: fixed; bottom: 10px; right: 20px; z-index: 1000;">
+   放大
+ </button>
 
-   /* 新增：全屏且横屏时的样式控制 */
-   .fullscreen-landscape {
-     position: fixed !important;
-     top: 0 !important;
-     left: 0 !important;
-     width: 100vw !important;
-     height: 100vh !important;
-     transform-origin: center center !important;
-     background: black !important;
-     z-index: 9998 !important;
-   }
- </style>
-</head>
-<body>
- <div id="player-container">
-   <video id="video" playsinline webkit-playsinline controls preload="metadata" poster="">
-     <source src="https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4" type="video/mp4" />
-     你的浏览器不支持视频播放。
-   </video>
-   <!-- 新增：铺满全屏按钮 -->
-   <button id="fullscreen-landscape-btn" style="display:none;">铺满全屏</button>
- </div>
+ <!-- 新增：铺满全屏按钮，默认隐藏 -->
+ <button id="fullfillBtn" title="铺满全屏/退出铺满" style="
+   position: fixed;
+   bottom: 60px; /* 放大按钮上方 */
+   right: 20px;
+   background-color: rgba(0, 0, 0, 0.6);
+   color: white;
+   border: none;
+   border-radius: 4px;
+   padding: 8px 12px;
+   font-size: 14px;
+   cursor: pointer;
+   display: none; /* 默认隐藏，横屏时显示 */
+   z-index: 1001;
+   user-select: none;
+   transition: background-color 0.3s ease;
+ ">
+   铺满全屏
+ </button>
+</div>
 
- <script>
-   const video = document.getElementById('video');
-   const fullscreenBtn = document.getElementById('fullscreen-landscape-btn');
-   const playerContainer = document.getElementById('player-container');
+<script>
+ const videoPlayer = document.getElementById('videoPlayer');
+ const expandBtn = document.getElementById('expandBtn');
+ const fullfillBtn = document.getElementById('fullfillBtn');
 
-   // 新增：判断设备是否支持屏幕方向锁定API
-   const canLockOrientation = !!screen.orientation && !!screen.orientation.lock;
+ // 状态变量
+ let isLandscapeMode = false;
+ let isFullfill = false;
 
-   // 新增：进入横屏播放时显示“铺满全屏”按钮的逻辑
-   function checkOrientation() {
-     const angle = screen.orientation.angle || window.orientation || 0;
-     // 横屏角度一般是 90 或 270
-     const isLandscape = angle === 90 || angle === -90 || angle === 270;
-     // iOS 有时用 window.orientation -90 90 这类值
-     return isLandscape;
-   }
-
-   // 新增：监听屏幕方向变化，横屏时显示按钮，竖屏时隐藏按钮和清理状态
-   function onOrientationChange() {
-     if (checkOrientation() && !video.paused && !video.ended) {
-       fullscreenBtn.style.display = 'inline-block';  // 显示按钮
-     } else {
-       fullscreenBtn.style.display = 'none';          // 隐藏按钮
-       // 退出横屏全屏样式和锁定（若有）
-       exitFullscreenLandscape();
-     }
-   }
-
-   // 新增：点击按钮后触发真正全屏并锁定横屏
-   fullscreenBtn.addEventListener('click', async () => {
-     try {
-       // 1. 进入浏览器原生全屏（针对视频或容器）
-       if (!document.fullscreenElement) {
-         await playerContainer.requestFullscreen();
-       }
-       // 2. 锁定屏幕方向为横屏
-       if (canLockOrientation) {
-         await screen.orientation.lock('landscape');
-       }
-       // 3. 添加横屏全屏样式覆盖，铺满屏幕
-       playerContainer.classList.add('fullscreen-landscape');
-       fullscreenBtn.style.display = 'none'; // 点击后隐藏按钮
-     } catch (err) {
-       console.warn('全屏或锁定横屏失败:', err);
-     }
-   });
-
-   // 新增：退出横屏铺满全屏状态
-   async function exitFullscreenLandscape() {
-     if (document.fullscreenElement) {
-       await document.exitFullscreen();
-     }
-     if (canLockOrientation) {
-       try {
-         await screen.orientation.unlock();
-       } catch(e) {
-         // 某些浏览器可能不支持unlock，忽略错误
-       }
-     }
-     playerContainer.classList.remove('fullscreen-landscape');
-   }
-
-   // 新增：监听全屏变化事件，退出时清理状态和样式
-   document.addEventListener('fullscreenchange', () => {
-     if (!document.fullscreenElement) {
-       exitFullscreenLandscape();
-     }
-   });
-
-   // 新增：监听视频播放、暂停事件，控制按钮显示隐藏
-   video.addEventListener('play', () => {
-     if (checkOrientation()) {
-       fullscreenBtn.style.display = 'inline-block';
-     }
-   });
-   video.addEventListener('pause', () => {
-     fullscreenBtn.style.display = 'none';
-     exitFullscreenLandscape();
-   });
-   video.addEventListener('ended', () => {
-     fullscreenBtn.style.display = 'none';
-     exitFullscreenLandscape();
-   });
-
-   // 新增：监听屏幕方向变化事件（兼容性写法）
-   if (screen.orientation && screen.orientation.addEventListener) {
-     screen.orientation.addEventListener('change', onOrientationChange);
+ // 原有：放大按钮切换横屏模式（示例简化版）
+ expandBtn.addEventListener('click', () => {
+   if (!isLandscapeMode) {
+     enterLandscapeMode();
    } else {
-     window.addEventListener('orientationchange', onOrientationChange);
+     exitLandscapeMode();
+   }
+ });
+
+ function enterLandscapeMode() {
+   isLandscapeMode = true;
+
+   // 这里保持你原本切换横屏逻辑，我用示例数值替代
+   videoPlayer.style.width = '100vh';
+   videoPlayer.style.height = '100vw';
+   videoPlayer.style.objectFit = 'contain';
+   videoPlayer.style.position = 'static';
+
+   // 显示铺满按钮 新增
+   fullfillBtn.style.display = 'block';
+
+   // 放大按钮文字改为“退出横屏”
+   expandBtn.textContent = '退出横屏';
+ }
+
+ function exitLandscapeMode() {
+   isLandscapeMode = false;
+
+   // 恢复竖屏默认尺寸
+   videoPlayer.style.width = '360px';
+   videoPlayer.style.height = '640px';
+   videoPlayer.style.objectFit = 'contain';
+   videoPlayer.style.position = 'static';
+
+   // 隐藏铺满按钮，退出铺满状态（如果有）
+   fullfillBtn.style.display = 'none';
+   if (isFullfill) {
+     exitFullfillMode();
    }
 
-   // 初始化时检测一次
-   onOrientationChange();
+   // 放大按钮文字恢复
+   expandBtn.textContent = '放大';
+ }
 
- </script>
-</body>
-</html>
+ // 新增：铺满按钮点击事件
+ fullfillBtn.addEventListener('click', () => {
+   if (!isFullfill) {
+     enterFullfillMode();
+   } else {
+     exitFullfillMode();
+   }
+ });
+
+ // 新增：进入铺满模式
+ function enterFullfillMode() {
+   isFullfill = true;
+
+   videoPlayer.style.position = 'fixed';
+   videoPlayer.style.top = '0';
+   videoPlayer.style.left = '0';
+   videoPlayer.style.width = '100vw';
+   videoPlayer.style.height = '100vh';
+   videoPlayer.style.objectFit = 'cover';
+   videoPlayer.style.zIndex = '9999';
+
+   fullfillBtn.textContent = '退出铺满';
+ }
+
+ // 新增：退出铺满模式，恢复横屏默认比例
+ function exitFullfillMode() {
+   isFullfill = false;
+
+   videoPlayer.style.position = 'static';
+   videoPlayer.style.width = '100vh';
+   videoPlayer.style.height = '100vw';
+   videoPlayer.style.objectFit = 'contain';
+   videoPlayer.style.zIndex = '';
+
+   fullfillBtn.textContent = '铺满全屏';
+ }
+</script>
