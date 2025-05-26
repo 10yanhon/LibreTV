@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <style>
-  /* ✅【新增】仅在拉满全屏状态下视觉铺满 */
-  .fullfilled .art-video-player.art-playing video {
-    object-fit: cover !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-color: black;
-  }
-</style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="same-origin">
@@ -158,6 +146,25 @@
     <meta http-equiv="Cache-Control" content="no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <style>
+/* ✅ 默认播放时适应比例 */
+.art-video-player.art-playing video {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+}
+
+/* ✅【新增】铺满模式，点击“拉满”按钮后生效 */
+body.fullfilled .art-video-player.art-playing video {
+  object-fit: cover !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: black;
+}
+</style>
 </head>
 <body>
     <header class="player-header-fixed p-4 flex items-center border-b border-[#333] gap-2">
