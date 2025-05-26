@@ -393,19 +393,24 @@ body.fullfilled .art-video-player.art-playing video {
                 }
             });
         });
-    </script>
-    <!-- ✅【新增】监听主页面 postMessage 实现视觉铺满 -->
-<script>
+    <script>
 window.addEventListener('message', (event) => {
+    console.log('[player.html] 收到消息：', event.data); // ✅ 关键调试日志
+
     if (!event.data || !event.data.type) return;
 
     const video = document.querySelector('video');
-    if (!video) return;
+    if (!video) {
+        console.warn('[player.html] 找不到 video 元素');
+        return;
+    }
 
     if (event.data.type === 'setObjectFitCover') {
-        video.style.objectFit = 'cover'; // ✅【新增】视觉铺满
+        console.log('[player.html] 设置 object-fit: cover');
+        video.style.objectFit = 'cover';
     } else if (event.data.type === 'resetObjectFit') {
-        video.style.objectFit = ''; // ✅【新增】恢复默认
+        console.log('[player.html] 恢复 object-fit 默认');
+        video.style.objectFit = '';
     }
 });
 </script>
