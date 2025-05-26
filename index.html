@@ -419,9 +419,7 @@
 
     <!-- PWA 注册 -->
     <script src="js/pwa-register.js"></script>
-
-    <!-- 环境变量注入脚本 -->
-    <script>
+<script>
 // ✅【新增】判断是否横屏
 function isLandscape() {
     return window.matchMedia("(orientation: landscape)").matches;
@@ -482,7 +480,10 @@ function showOrHideFullButton() {
 // ✅【新增】用于记录当前状态
 let isFullFilled = false;
 </script>
+    <!-- 环境变量注入脚本 -->
+    
     <script>
+    
         // 创建全局环境变量对象
         window.__ENV__ = window.__ENV__ || {};
         
