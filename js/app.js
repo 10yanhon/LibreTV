@@ -1112,19 +1112,35 @@ function showVideoPlayer(url) {
     // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
-    // 在框架中打开播放页面
-    videoPlayerFrame = document.createElement('iframe');
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    document.body.appendChild(videoPlayerFrame);
-    // 将焦点移入iframe
+
+    // ✅【新增】创建 iframe 播放器
+    const videoPlayerFrame = document.createElement('iframe'); // ✅【新增】
+    videoPlayerFrame.id = 'VideoPlayerFrame';                  // ✅【新增】
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40'; // ✅【新增】
+    videoPlayerFrame.src = url;                                // ✅【新增】
+    videoPlayerFrame.allowFullscreen = true;                   // ✅【新增】
+    document.body.appendChild(videoPlayerFrame);               // ✅【新增】
+
+    // ✅【新增】创建“铺满全屏”按钮
+    const fullBtn = document.createElement('button');          // ✅【新增】
+    fullBtn.id = 'FullFillButton';                             // ✅【新增】
+    fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg'; // ✅【新增】
+    fullBtn.style.display = isLandscape() ? 'block' : 'none';  // ✅【新增】
+    fullBtn.innerHTML = '⛶';                                   // ✅【新增】
+    fullBtn.onclick = toggleFullFill;                          // ✅【新增】
+    document.body.appendChild(fullBtn);                        // ✅【新增】
+
+    // ✅【新增】监听方向变化控制按钮显隐
+    window.addEventListener('orientationchange', showOrHideFullButton); // ✅【新增】
+    window.addEventListener('resize', showOrHideFullButton);            // ✅【新增】
+
+    // 将焦点移入 iframe
     videoPlayerFrame.focus();
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
         // 恢复搜索结果显示
@@ -1139,12 +1155,76 @@ function closeVideoPlayer(home = false) {
             document.getElementById('doubanArea').classList.remove('hidden');
         }
     }
+
+    // ✅【新增】移除“铺满全屏”按钮
+    const fullBtn = document.getElementById('FullFillButton');
+    if (fullBtn) fullBtn.remove(); // ✅【新增】
+
     if (home) {
         // 刷新主页
-        window.location.href = '/'
+        window.location.href = '/';
     }
 }
 
+// ✅【新增】铺满状态变量
+let isFullFilled = false;
+
+// ✅【新增】判断是否横屏
+function isLandscape() {
+    return window.matchMedia("(orientation: landscape)").matches;
+}
+
+// ✅【新增】进入铺满全屏 + 横屏
+async function enterFullFilled() {
+    const iframe = document.getElementById('VideoPlayerFrame');
+    if (!iframe) return;
+
+    try {
+        await iframe.requestFullscreen(); // ✅ 进入全屏
+        if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape'); // ✅ 锁定横屏
+        }
+        isFullFilled = true;
+        updateButtonIcon(); // ✅ 切换图标
+    } catch (err) {
+        alert('无法进入全屏，可能受到浏览器限制'); // ✅ 提示
+    }
+}
+
+// ✅【新增】退出全屏 + 恢复方向
+async function exitFullFilled() {
+    if (document.fullscreenElement) {
+        await document.exitFullscreen(); // ✅ 退出全屏
+    }
+    if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock(); // ✅ 恢复自动旋转
+    }
+    isFullFilled = false;
+    updateButtonIcon();
+}
+
+// ✅【新增】切换铺满按钮图标
+function updateButtonIcon() {
+    const btn = document.getElementById('FullFillButton');
+    if (!btn) return;
+    btn.innerHTML = isFullFilled ? '🡸' : '⛶'; // 你可改为 SVG 图标
+}
+
+// ✅【新增】按钮点击事件
+function toggleFullFill() {
+    if (!isLandscape()) {
+        alert('请横屏后再点击该按钮'); // ✅ iOS 提示
+        return;
+    }
+    isFullFilled ? exitFullFilled() : enterFullFilled();
+}
+
+// ✅【新增】横屏时显示按钮，竖屏隐藏
+function showOrHideFullButton() {
+    const btn = document.getElementById('FullFillButton');
+    if (!btn) return;
+    btn.style.display = isLandscape() ? 'block' : 'none';
+}
 // 播放上一集
 function playPreviousEpisode(sourceCode) {
     if (currentEpisodeIndex > 0) {
