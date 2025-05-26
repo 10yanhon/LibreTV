@@ -1104,6 +1104,18 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
 
 // 弹出播放器页面
 function showVideoPlayer(url) {
+    // ✅【新增】创建“铺满全屏”按钮
+const fullBtn = document.createElement('button');
+fullBtn.id = 'FullFillButton';
+fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
+fullBtn.style.display = isLandscape() ? 'block' : 'none';
+fullBtn.innerHTML = '⛶';
+fullBtn.onclick = toggleFullFill;
+document.body.appendChild(fullBtn);
+
+// ✅【新增】监听屏幕旋转控制按钮显隐
+window.addEventListener('orientationchange', showOrHideFullButton);
+window.addEventListener('resize', showOrHideFullButton);
     // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
     if (detailModal) {
@@ -1124,6 +1136,9 @@ function showVideoPlayer(url) {
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
+    // ✅【新增】移除铺满按钮
+const fullBtn = document.getElementById('FullFillButton');
+if (fullBtn) fullBtn.remove();
     videoPlayerFrame = document.getElementById('VideoPlayerFrame');
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
