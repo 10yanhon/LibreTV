@@ -432,19 +432,35 @@ function updateButtonIcon() {
     btn.innerHTML = isFullFilled ? '🡸' : '⛶';
 }
 
-// ✅【修改】进入铺满 + 横屏锁定 + 加类控制视觉
+// ✅【修改】进入铺满 + 横屏锁定 + 向 iframe 注入“视觉拉满”样式
 async function enterFullFilled() {
     const iframe = document.getElementById('VideoPlayerFrame');
     if (!iframe) return;
 
     try {
         await iframe.requestFullscreen();
+
         if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
         }
 
-        // ✅【新增】给 iframe 内部添加 fullfilled 类
-        iframe.contentWindow.document.documentElement.classList.add('fullfilled');
+        // ✅ 注入 iframe 内部样式 class（确保同源）
+        const setFullClass = () => {
+            try {
+                const body = iframe.contentDocument?.body;
+                if (body) {
+                    body.classList.add('fullfilled');
+                }
+            } catch (e) {
+                console.warn('无法注入铺满样式，可能跨域：', e);
+            }
+        };
+
+        if (iframe.contentDocument?.readyState === 'complete') {
+            setFullClass();
+        } else {
+            iframe.onload = setFullClass;
+        }
 
         isFullFilled = true;
         updateButtonIcon();
@@ -453,7 +469,7 @@ async function enterFullFilled() {
     }
 }
 
-// ✅【修改】退出铺满时移除视觉样式
+// ✅【修改】退出铺满 + 解锁横屏 + 移除 iframe 样式
 async function exitFullFilled() {
     const iframe = document.getElementById('VideoPlayerFrame');
     if (!iframe) return;
@@ -461,12 +477,20 @@ async function exitFullFilled() {
     if (document.fullscreenElement) {
         await document.exitFullscreen();
     }
+
     if (screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
     }
 
-    // ✅【新增】移除 iframe 中的视觉铺满类
-    iframe.contentWindow.document.documentElement.classList.remove('fullfilled');
+    // ✅ 移除 iframe 中的铺满 class
+    try {
+        const body = iframe.contentDocument?.body;
+        if (body) {
+            body.classList.remove('fullfilled');
+        }
+    } catch (e) {
+        console.warn('无法移除铺满样式，可能跨域：', e);
+    }
 
     isFullFilled = false;
     updateButtonIcon();
