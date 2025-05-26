@@ -394,5 +394,23 @@ body.fullfilled .art-video-player.art-playing video {
             });
         });
     </script>
+    <!-- ✅【新增】监听主页面 postMessage 实现视觉铺满 -->
+<script>
+window.addEventListener('message', (event) => {
+    if (!event.data || !event.data.type) return;
+
+    const video = document.querySelector('video');
+    if (!video) return;
+
+    if (event.data.type === 'setObjectFitCover') {
+        video.style.objectFit = 'cover'; // ✅【新增】视觉铺满
+    } else if (event.data.type === 'resetObjectFit') {
+        video.style.objectFit = ''; // ✅【新增】恢复默认
+    }
+});
+</script>
+
+</body>
+</html>
 </body>
 </html>
