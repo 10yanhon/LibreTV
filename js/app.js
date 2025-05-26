@@ -1145,7 +1145,6 @@ function closeVideoPlayer(home = false) {
     }
 }
 
-
 // 播放上一集
 function playPreviousEpisode(sourceCode) {
     if (currentEpisodeIndex > 0) {
