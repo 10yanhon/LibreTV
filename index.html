@@ -500,15 +500,13 @@ function toggleFullFill() {
         alert('请横屏后再点击该按钮');
         return;
     }
-
-    isFullFilled ? exitFullFilled() : enterFullFilled();
-}
-
-// ✅【新增】屏幕旋转时控制按钮显隐
 function showOrHideFullButton() {
     const btn = document.getElementById('FullFillButton');
     if (!btn) return;
+    // ✅ 只有横屏才显示
     btn.style.display = isLandscape() ? 'block' : 'none';
+}
+    isFullFilled ? exitFullFilled() : enterFullFilled();
 }
 </script>
 </body>
