@@ -146,24 +146,26 @@
     <meta http-equiv="Cache-Control" content="no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    //新增
     <style>
-/* 默认样式 */
-.art-video-player.art-playing video {
-  object-fit: contain;
-  width: 100%;
-  height: 100%;
-}
+  #video {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+    background-color: black;
+  }
 
-/* 铺满模式 */
-body.fullfilled .art-video-player.art-playing video {
-  object-fit: cover !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: black;
-}
+  .fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    background-color: black;
+  }
 </style>
 </head>
 <body>
@@ -406,14 +408,17 @@ function showToast(message) {
 }
 
 // 接收父窗口指令控制视频铺满
-window.addEventListener("load", () => {
   window.addEventListener("message", (event) => {
-    const video = document.querySelector('video');
-    if (!event.data || !event.data.type) return;
-    if (!video) {
-      showToast('❌ 找不到 <video> 元素');
-      return;
+    if (event.data?.type === "setObjectFitCover") {
+      const video = document.getElementById("video");
+      if (video) {
+        video.classList.add("fullscreen");
+        console.log("✅ fullscreen 样式已应用");
+      } else {
+        console.warn("⚠️ 未找到 video 元素");
+      }
     }
+  });
 
     if (event.data.type === 'setObjectFitCover') {
       video.style.objectFit = 'cover';
