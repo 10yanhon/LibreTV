@@ -441,11 +441,14 @@
 // ✅ 初始化变量
 let isFullFilled = false;
 
-// ✅ 判断是否为横屏
+// ✅ 强制用屏幕方向和宽高双重判断
 function isLandscape() {
+    const orientation = screen.orientation || screen.mozOrientation || screen.msOrientation;
+    if (orientation && orientation.type) {
+        return orientation.type.includes('landscape');
+    }
     return window.innerWidth > window.innerHeight;
 }
-
 // ✅ 控制按钮图标（⛶ / 🡸）
 function updateButtonIcon() {
     const btn = document.getElementById('FullFillButton');
