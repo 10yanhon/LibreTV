@@ -443,13 +443,12 @@ function isLandscape() {
   return window.innerWidth > window.innerHeight;
 }
 
-function createFullscreenButtonIfLandscape() {
-  // 如果按钮已存在，不重复创建
-  if (document.getElementById("fullscreenBtn")) return;
+function hasVideoPlayerFrame() {
+  return document.getElementById('VideoPlayerFrame') !== null;
+}
 
-  const iframe = document.getElementById("VideoPlayerFrame");
-  // 没有 iframe 或非横屏，直接不插入按钮
-  if (!isLandscape() || !iframe) return;
+function createFullscreenButton() {
+  if (document.getElementById("fullscreenBtn")) return;
 
   const fullscreenBtn = document.createElement("button");
   fullscreenBtn.id = "fullscreenBtn";
@@ -465,34 +464,50 @@ function createFullscreenButtonIfLandscape() {
   fullscreenBtn.style.borderRadius = "5px";
 
   fullscreenBtn.addEventListener("click", () => {
+    const iframe = document.getElementById("VideoPlayerFrame");
+    if (!iframe) {
+      alert("未找到播放器 iframe");
+      return;
+    }
+
     try {
       iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-      console.log('📤 已发送：{ type: setObjectFitCover }');
+      console.log("📤 已发送 postMessage: setObjectFitCover");
     } catch (e) {
-      console.error('❌ postMessage 失败:', e);
+      console.error("❌ postMessage 失败:", e);
     }
   });
 
   document.body.appendChild(fullscreenBtn);
 }
 
-// 页面加载后首次判断
-window.addEventListener("load", () => {
-  setTimeout(createFullscreenButtonIfLandscape, 500);
+function checkAndUpdateFullscreenButton() {
+  const btn = document.getElementById("fullscreenBtn");
+  const landscape = isLandscape();
+  const hasIframe = hasVideoPlayerFrame();
+
+  if (landscape && hasIframe && !btn) {
+    createFullscreenButton();
+  } else if ((!landscape || !hasIframe) && btn) {
+    btn.remove();
+  }
+}
+
+// 监听页面方向变化
+window.addEventListener("orientationchange", () => {
+  setTimeout(checkAndUpdateFullscreenButton, 500);
 });
 
-// 每次方向变化后判断（iframe 必须已存在才创建按钮）
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => {
-    const btn = document.getElementById("fullscreenBtn");
-    const iframe = document.getElementById("VideoPlayerFrame");
+// 页面加载完成后，持续监听 iframe 是否加载（不加载不出现按钮）
+window.addEventListener("load", () => {
+  const observer = new MutationObserver(() => {
+    checkAndUpdateFullscreenButton();
+  });
 
-    if (!isLandscape() || !iframe) {
-      if (btn) btn.remove(); // 横屏退出或 iframe 消失，则移除按钮
-    } else if (!btn && iframe) {
-      createFullscreenButtonIfLandscape(); // 横屏且 iframe 存在才创建按钮
-    }
-  }, 500);
+  observer.observe(document.body, { childList: true, subtree: false });
+
+  // 初始检查一次
+  checkAndUpdateFullscreenButton();
 });
     
 // ✅ 显示或隐藏“⛶ 拉满全屏”按钮（仅横屏时显示）
