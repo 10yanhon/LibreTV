@@ -1137,6 +1137,8 @@ function showVideoPlayer(url) {
 
     // ✅【新增】首次进入播放器时就判断当前屏幕是否横屏
     showOrHideFullButton();
+    // 将焦点移入iframe
+    videoPlayerFrame.focus();
 }
 
 // 关闭播放器页面
