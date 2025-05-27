@@ -498,46 +498,67 @@ function toggleFullFill() {
 
 // ✅ 播放器打开时调用
 function showVideoPlayer(url) {
-    // 插入按钮
-    createFullFillButton();
-    // 监听横竖屏变化以控制按钮显隐
-    window.addEventListener('orientationchange', showOrHideFullButton);
-    window.addEventListener('resize', showOrHideFullButton);
-    showOrHideFullButton(); // 初次加载判断是否横屏
-
-    // 隐藏其它元素
+    // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
+    if (detailModal) {
+        detailModal.classList.add('hidden');
+    }
+
+    // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
 
-    // 创建 iframe 播放器
-    const iframe = document.createElement('iframe');
-    iframe.id = 'VideoPlayerFrame';
-    iframe.className = 'fixed w-full h-screen z-40';
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    iframe.focus();
+    // 在框架中打开播放页面
+    videoPlayerFrame = document.createElement('iframe');
+    videoPlayerFrame.id = 'VideoPlayerFrame';
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
+    videoPlayerFrame.src = url;
+    document.body.appendChild(videoPlayerFrame);
+    videoPlayerFrame.focus();
+
+    // ✅【修改1】：仅在横屏时创建按钮，避免竖屏出错
+    if (isLandscape()) {
+        const fullBtn = document.createElement('button');
+        fullBtn.id = 'FullFillButton';
+        fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
+        fullBtn.style.display = 'none'; // 初始隐藏
+        fullBtn.innerHTML = '⛶';
+        fullBtn.onclick = toggleFullFill;
+        document.body.appendChild(fullBtn);
+
+        // ✅ 注册监听器
+        window.addEventListener('orientationchange', showOrHideFullButton);
+        window.addEventListener('resize', showOrHideFullButton);
+
+        showOrHideFullButton(); // 初始判断
+    }
+
+    // 将焦点移入iframe
+    videoPlayerFrame.focus();
 }
 
 // ✅ 关闭播放器并清理
 function closeVideoPlayer(home = false) {
+    // ✅ 移除铺满按钮
     const fullBtn = document.getElementById('FullFillButton');
     if (fullBtn) fullBtn.remove();
 
-    const iframe = document.getElementById('VideoPlayerFrame');
-    if (iframe) iframe.remove();
-
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
-
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-        document.getElementById('doubanArea').classList.remove('hidden');
+    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    if (videoPlayerFrame) {
+        videoPlayerFrame.remove();
+        document.getElementById('resultsArea').classList.remove('hidden');
+        const detailModal = document.getElementById('modal');
+        if (detailModal) {
+            detailModal.classList.add('hidden');
+        }
+        if (localStorage.getItem('doubanEnabled') === 'true') {
+            document.getElementById('doubanArea').classList.remove('hidden');
+        }
     }
 
-    document.getElementById('resultsArea').classList.remove('hidden');
-
-    if (home) window.location.href = '/';
+    if (home) {
+        window.location.href = '/';
+    }
 }
 </script>
 </body>
