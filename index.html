@@ -444,14 +444,13 @@ function isLandscape() {
 }
 
 function createFullscreenButtonIfLandscape() {
-  // 不重复插入
+  // 如果按钮已存在，不重复创建
   if (document.getElementById("fullscreenBtn")) return;
 
-  // 确保横屏并且播放器已加载
   const iframe = document.getElementById("VideoPlayerFrame");
+  // 没有 iframe 或非横屏，直接不插入按钮
   if (!isLandscape() || !iframe) return;
 
-  // 创建按钮
   const fullscreenBtn = document.createElement("button");
   fullscreenBtn.id = "fullscreenBtn";
   fullscreenBtn.textContent = "⛶ 拉满全屏";
@@ -465,34 +464,37 @@ function createFullscreenButtonIfLandscape() {
   fullscreenBtn.style.border = "none";
   fullscreenBtn.style.borderRadius = "5px";
 
-  // 按钮点击发送 postMessage 给 iframe
   fullscreenBtn.addEventListener("click", () => {
     try {
       iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-      console.log('📤 已发送 postMessage：{ type: setObjectFitCover }');
+      console.log('📤 已发送：{ type: setObjectFitCover }');
     } catch (e) {
-      console.error('❌ 发送失败:', e);
+      console.error('❌ postMessage 失败:', e);
     }
   });
 
   document.body.appendChild(fullscreenBtn);
 }
 
-// 页面加载时检查是否应插入按钮
-window.addEventListener("load", createFullscreenButtonIfLandscape);
+// 页面加载后首次判断
+window.addEventListener("load", () => {
+  setTimeout(createFullscreenButtonIfLandscape, 500);
+});
 
-// 横竖屏切换时动态增删按钮
+// 每次方向变化后判断（iframe 必须已存在才创建按钮）
 window.addEventListener("orientationchange", () => {
   setTimeout(() => {
     const btn = document.getElementById("fullscreenBtn");
     const iframe = document.getElementById("VideoPlayerFrame");
-    if (!isLandscape() && btn) {
-      btn.remove();
-    } else if (isLandscape() && !btn && iframe) {
-      createFullscreenButtonIfLandscape();
+
+    if (!isLandscape() || !iframe) {
+      if (btn) btn.remove(); // 横屏退出或 iframe 消失，则移除按钮
+    } else if (!btn && iframe) {
+      createFullscreenButtonIfLandscape(); // 横屏且 iframe 存在才创建按钮
     }
   }, 500);
 });
+    
 // ✅ 显示或隐藏“⛶ 拉满全屏”按钮（仅横屏时显示）
 function showOrHideFullButton() {
     const btn = document.getElementById('FullFillButton');
