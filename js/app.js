@@ -1102,29 +1102,47 @@ function playVideo(url, vod_name, sourceCode, episodeIndex = 0, vodId = '') {
     window.location.href = watchUrl;
 }
 
-// 新增原始原面
+// 弹出播放器页面
 function showVideoPlayer(url) {
-    const iframe = document.createElement('iframe');
-    iframe.id = 'VideoPlayerFrame';
-    iframe.className = 'fixed w-full h-screen z-40';
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    iframe.focus();
+    // 在打开播放器前，隐藏详情弹窗
+    const detailModal = document.getElementById('modal');
+    if (detailModal) {
+        detailModal.classList.add('hidden');
+    }
+    // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
+    document.getElementById('resultsArea').classList.add('hidden');
+    document.getElementById('doubanArea').classList.add('hidden');
+    // 在框架中打开播放页面
+    videoPlayerFrame = document.createElement('iframe');
+    videoPlayerFrame.id = 'VideoPlayerFrame';
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
+    videoPlayerFrame.src = url;
+    document.body.appendChild(videoPlayerFrame);
+    // 将焦点移入iframe
+    videoPlayerFrame.focus();
 }
 
+// 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    const iframe = document.getElementById('VideoPlayerFrame');
-    if (iframe) iframe.remove();
-
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
-
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-        document.getElementById('doubanArea').classList.remove('hidden');
+    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    if (videoPlayerFrame) {
+        videoPlayerFrame.remove();
+        // 恢复搜索结果显示
+        document.getElementById('resultsArea').classList.remove('hidden');
+        // 关闭播放器时也隐藏详情弹窗
+        const detailModal = document.getElementById('modal');
+        if (detailModal) {
+            detailModal.classList.add('hidden');
+        }
+        // 如果启用豆瓣区域则显示豆瓣区域
+        if (localStorage.getItem('doubanEnabled') === 'true') {
+            document.getElementById('doubanArea').classList.remove('hidden');
+        }
     }
-    document.getElementById('resultsArea').classList.remove('hidden');
-
-    if (home) window.location.href = '/';
+    if (home) {
+        // 刷新主页
+        window.location.href = '/'
+    }
 }
 
 // 播放上一集
