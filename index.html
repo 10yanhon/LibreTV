@@ -443,12 +443,11 @@ function isLandscape() {
   return window.matchMedia("(orientation: landscape)").matches;
 }
 
-function hasVideoPlayerFrame() {
-  return document.getElementById('VideoPlayerFrame') !== null;
-}
-
 function createFullscreenButton() {
   if (document.getElementById("fullscreenBtn")) return;
+
+  const iframe = document.getElementById("VideoPlayerFrame");
+  if (!iframe || !isLandscape()) return;
 
   const fullscreenBtn = document.createElement("button");
   fullscreenBtn.id = "fullscreenBtn";
@@ -464,15 +463,13 @@ function createFullscreenButton() {
   fullscreenBtn.style.borderRadius = "5px";
 
   fullscreenBtn.addEventListener("click", () => {
-    const iframe = document.getElementById("VideoPlayerFrame");
-    if (!iframe) return;
+    console.log("⛶ 点击按钮");
+    iframe.contentWindow.postMessage({ type: "setObjectFitCover" }, "*");
 
-    try {
-      iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-      console.log("📤 postMessage sent");
-    } catch (e) {
-      console.error("❌ Failed to send postMessage:", e);
-    }
+    // 强制刷新 iframe 容器尺寸
+    iframe.style.display = "none";
+    iframe.offsetHeight;
+    iframe.style.display = "block";
   });
 
   document.body.appendChild(fullscreenBtn);
@@ -483,34 +480,28 @@ function removeFullscreenButton() {
   if (btn) btn.remove();
 }
 
-function monitorOrientationAndIframe() {
-  const checkConditions = () => {
-    const landscape = isLandscape();
-    const hasIframe = hasVideoPlayerFrame();
-
-    if (landscape && hasIframe) {
+// 监听页面横竖屏变化
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => {
+    if (isLandscape()) {
       createFullscreenButton();
     } else {
       removeFullscreenButton();
     }
-  };
+  }, 500);
+});
 
-  // 初始判断
-  checkConditions();
-
-  // 每 500ms 检查一次状态
-  setInterval(checkConditions, 500);
-}
-
-// 页面加载后开始监控横屏 + iframe 出现
-window.addEventListener("load", monitorOrientationAndIframe);
-// 页面加载完成后，持续监听 iframe 是否加载（不加载不出现按钮）
+// 页面加载后定期检查 iframe 是否出现 + 当前是否横屏
 window.addEventListener("load", () => {
-  const observer = new MutationObserver(() => {
-    checkAndUpdateFullscreenButton();
-  });
+  const interval = setInterval(() => {
+    const iframe = document.getElementById("VideoPlayerFrame");
+    if (iframe && isLandscape()) {
+      createFullscreenButton();
+      clearInterval(interval);
+    }
+  }, 300);
+});
 
-  observer.observe(document.body, { childList: true, subtree: false });
 
   // 初始检查一次
   checkAndUpdateFullscreenButton();
