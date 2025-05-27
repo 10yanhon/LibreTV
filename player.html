@@ -427,6 +427,8 @@ function showToast(message) {
       video.style.position = 'absolute';
       video.style.top = '0';
       video.style.left = '0';
+      // ⬇️ 这里加入日志输出
+      console.log('📐 视频尺寸:', video.getBoundingClientRect());
       showToast('✅ 拉满模式已触发');
     } else if (event.data.type === 'resetObjectFit') {
       video.style.objectFit = '';
