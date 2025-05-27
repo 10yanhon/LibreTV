@@ -440,7 +440,7 @@
 <script>
 // ✅ 判断是否为横屏状态
 function isLandscape() {
-  return window.innerWidth > window.innerHeight;
+  return window.matchMedia("(orientation: landscape)").matches;
 }
 
 function hasVideoPlayerFrame() {
@@ -465,39 +465,45 @@ function createFullscreenButton() {
 
   fullscreenBtn.addEventListener("click", () => {
     const iframe = document.getElementById("VideoPlayerFrame");
-    if (!iframe) {
-      alert("未找到播放器 iframe");
-      return;
-    }
+    if (!iframe) return;
 
     try {
       iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-      console.log("📤 已发送 postMessage: setObjectFitCover");
+      console.log("📤 postMessage sent");
     } catch (e) {
-      console.error("❌ postMessage 失败:", e);
+      console.error("❌ Failed to send postMessage:", e);
     }
   });
 
   document.body.appendChild(fullscreenBtn);
 }
 
-function checkAndUpdateFullscreenButton() {
+function removeFullscreenButton() {
   const btn = document.getElementById("fullscreenBtn");
-  const landscape = isLandscape();
-  const hasIframe = hasVideoPlayerFrame();
-
-  if (landscape && hasIframe && !btn) {
-    createFullscreenButton();
-  } else if ((!landscape || !hasIframe) && btn) {
-    btn.remove();
-  }
+  if (btn) btn.remove();
 }
 
-// 监听页面方向变化
-window.addEventListener("orientationchange", () => {
-  setTimeout(checkAndUpdateFullscreenButton, 500);
-});
+function monitorOrientationAndIframe() {
+  const checkConditions = () => {
+    const landscape = isLandscape();
+    const hasIframe = hasVideoPlayerFrame();
 
+    if (landscape && hasIframe) {
+      createFullscreenButton();
+    } else {
+      removeFullscreenButton();
+    }
+  };
+
+  // 初始判断
+  checkConditions();
+
+  // 每 500ms 检查一次状态
+  setInterval(checkConditions, 500);
+}
+
+// 页面加载后开始监控横屏 + iframe 出现
+window.addEventListener("load", monitorOrientationAndIframe);
 // 页面加载完成后，持续监听 iframe 是否加载（不加载不出现按钮）
 window.addEventListener("load", () => {
   const observer = new MutationObserver(() => {
