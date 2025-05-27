@@ -463,7 +463,7 @@ function createFullscreenButtonIfLandscape() {
     fullscreenBtn.addEventListener("click", () => {
       const iframe = document.getElementById("videoPlayer");
       if (iframe?.contentWindow) {
-        iframe.contentWindow.postMessage({ type: "TOGGLE_FULLSCREEN" }, "*");
+        iframe.contentWindow.postMessage({ type: "setObjectFitCover" }, "*");
       } else {
         alert("视频尚未加载");
       }
