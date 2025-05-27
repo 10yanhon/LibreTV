@@ -437,7 +437,7 @@
 
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
- <script>
+<script>
 // ✅ 判断是否为横屏状态
 function isLandscape() {
     return window.innerWidth > window.innerHeight;
@@ -447,9 +447,7 @@ function isLandscape() {
 function showOrHideFullButton() {
     const btn = document.getElementById('FullFillButton');
     if (!btn) return;
-    const isNowLandscape = isLandscape();
-    console.log('是否横屏：', isNowLandscape);
-    btn.style.display = isNowLandscape ? 'block' : 'none';
+    btn.style.display = isLandscape() ? 'block' : 'none';
 }
 
 // ✅ 创建并添加“⛶ 拉满全屏”按钮
@@ -463,7 +461,7 @@ function createFullFillButton() {
     document.body.appendChild(fullBtn);
 }
 
-// ✅ 切换视觉拉满（沉浸式全屏 + object-fit: cover）
+// ✅ 切换视觉拉满
 let isFullFilled = false;
 function toggleFullFill() {
     if (!isLandscape()) {
@@ -475,16 +473,13 @@ function toggleFullFill() {
     if (!iframe) return;
 
     if (!isFullFilled) {
-        // 进入沉浸式全屏
         if (iframe.requestFullscreen) iframe.requestFullscreen();
         else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
         else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
         else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
 
-        // 通知 iframe 视觉铺满
         iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
     } else {
-        // 退出全屏
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
@@ -496,69 +491,47 @@ function toggleFullFill() {
     isFullFilled = !isFullFilled;
 }
 
-// ✅ 播放器打开时调用
+// ✅ 播放器打开函数（仅在横屏时创建按钮）
 function showVideoPlayer(url) {
-    // 在打开播放器前，隐藏详情弹窗
     const detailModal = document.getElementById('modal');
-    if (detailModal) {
-        detailModal.classList.add('hidden');
-    }
-
-    // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
+    if (detailModal) detailModal.classList.add('hidden');
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
 
-    // 在框架中打开播放页面
-    videoPlayerFrame = document.createElement('iframe');
+    const videoPlayerFrame = document.createElement('iframe');
     videoPlayerFrame.id = 'VideoPlayerFrame';
     videoPlayerFrame.className = 'fixed w-full h-screen z-40';
     videoPlayerFrame.src = url;
     document.body.appendChild(videoPlayerFrame);
-    videoPlayerFrame.focus();
 
-    // ✅【修改1】：仅在横屏时创建按钮，避免竖屏出错
+    // ✅ 仅横屏下创建按钮并注册监听
     if (isLandscape()) {
-        const fullBtn = document.createElement('button');
-        fullBtn.id = 'FullFillButton';
-        fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
-        fullBtn.style.display = 'none'; // 初始隐藏
-        fullBtn.innerHTML = '⛶';
-        fullBtn.onclick = toggleFullFill;
-        document.body.appendChild(fullBtn);
-
-        // ✅ 注册监听器
+        createFullFillButton();
         window.addEventListener('orientationchange', showOrHideFullButton);
         window.addEventListener('resize', showOrHideFullButton);
-
-        showOrHideFullButton(); // 初始判断
+        showOrHideFullButton();
     }
 
-    // 将焦点移入iframe
     videoPlayerFrame.focus();
 }
 
-// ✅ 关闭播放器并清理
+// ✅ 播放器关闭函数
 function closeVideoPlayer(home = false) {
-    // ✅ 移除铺满按钮
     const fullBtn = document.getElementById('FullFillButton');
     if (fullBtn) fullBtn.remove();
 
-    videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) {
-        videoPlayerFrame.remove();
-        document.getElementById('resultsArea').classList.remove('hidden');
-        const detailModal = document.getElementById('modal');
-        if (detailModal) {
-            detailModal.classList.add('hidden');
-        }
-        if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
-        }
+    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    if (videoPlayerFrame) videoPlayerFrame.remove();
+
+    const detailModal = document.getElementById('modal');
+    if (detailModal) detailModal.classList.add('hidden');
+
+    document.getElementById('resultsArea').classList.remove('hidden');
+    if (localStorage.getItem('doubanEnabled') === 'true') {
+        document.getElementById('doubanArea').classList.remove('hidden');
     }
 
-    if (home) {
-        window.location.href = '/';
-    }
+    if (home) window.location.href = '/';
 }
 </script>
 </body>
