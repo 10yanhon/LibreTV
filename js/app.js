@@ -1109,44 +1109,21 @@ function showVideoPlayer(url) {
     if (detailModal) {
         detailModal.classList.add('hidden');
     }
-
     // 临时隐藏搜索结果和豆瓣区域，防止高度超出播放器而出现滚动条
     document.getElementById('resultsArea').classList.add('hidden');
     document.getElementById('doubanArea').classList.add('hidden');
-
     // 在框架中打开播放页面
     videoPlayerFrame = document.createElement('iframe');
     videoPlayerFrame.id = 'VideoPlayerFrame';
     videoPlayerFrame.className = 'fixed w-full h-screen z-40';
     videoPlayerFrame.src = url;
     document.body.appendChild(videoPlayerFrame);
-    videoPlayerFrame.focus();
-
-    // ✅【新增】仅在横屏状态下创建“铺满全屏”按钮
-if (isLandscape()) {
-    const fullBtn = document.createElement('button');
-    fullBtn.id = 'FullFillButton';
-    fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
-    fullBtn.style.display = 'block';
-    fullBtn.innerHTML = '⛶';
-    fullBtn.onclick = toggleFullFill;
-    document.body.appendChild(fullBtn);
-}
-    // ✅【新增】监听屏幕旋转控制按钮显隐
-    window.addEventListener('orientationchange', showOrHideFullButton);
-    window.addEventListener('resize', showOrHideFullButton);
-
-    // ✅【新增】首次进入播放器时就判断当前屏幕是否横屏
-    showOrHideFullButton();
     // 将焦点移入iframe
     videoPlayerFrame.focus();
 }
 
 // 关闭播放器页面
 function closeVideoPlayer(home = false) {
-    // ✅【新增】移除铺满按钮
-const fullBtn = document.getElementById('FullFillButton');
-if (fullBtn) fullBtn.remove();
     videoPlayerFrame = document.getElementById('VideoPlayerFrame');
     if (videoPlayerFrame) {
         videoPlayerFrame.remove();
