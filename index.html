@@ -440,8 +440,51 @@
 <script>
 // ✅ 判断是否为横屏状态
 function isLandscape() {
-    return window.innerWidth > window.innerHeight;
+  return window.innerWidth > window.innerHeight;
 }
+
+function createFullscreenButtonIfLandscape() {
+  if (document.getElementById("fullscreenBtn")) return;
+
+  if (isLandscape()) {
+    const fullscreenBtn = document.createElement("button");
+    fullscreenBtn.id = "fullscreenBtn";
+    fullscreenBtn.textContent = "⛶ 拉满全屏";
+    fullscreenBtn.style.position = "fixed";
+    fullscreenBtn.style.bottom = "20px";
+    fullscreenBtn.style.right = "20px";
+    fullscreenBtn.style.zIndex = "9999";
+    fullscreenBtn.style.padding = "10px";
+    fullscreenBtn.style.background = "#000";
+    fullscreenBtn.style.color = "#fff";
+    fullscreenBtn.style.border = "none";
+    fullscreenBtn.style.borderRadius = "5px";
+
+    fullscreenBtn.addEventListener("click", () => {
+      const iframe = document.getElementById("videoPlayer");
+      if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage({ type: "TOGGLE_FULLSCREEN" }, "*");
+      } else {
+        alert("视频尚未加载");
+      }
+    });
+
+    document.body.appendChild(fullscreenBtn);
+  }
+}
+
+window.addEventListener("load", createFullscreenButtonIfLandscape);
+
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => {
+    const btn = document.getElementById("fullscreenBtn");
+    if (!isLandscape() && btn) {
+      btn.remove();
+    } else if (isLandscape() && !btn) {
+      createFullscreenButtonIfLandscape();
+    }
+  }, 500);
+});
 
 // ✅ 显示或隐藏“⛶ 拉满全屏”按钮（仅横屏时显示）
 function showOrHideFullButton() {
