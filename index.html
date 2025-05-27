@@ -437,23 +437,23 @@
 
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
-    <script>
-// ✅【新增】判断是否为横屏状态(强兼容)
-function isLandscape() {
-    return window.innerwidth>window.innerheight;
-}
-
-// ✅【新增】当前是否处于“拉满状态”
+ <script>
+// ✅ 初始化变量
 let isFullFilled = false;
 
-// ✅【新增】更新按钮图标
+// ✅ 判断是否为横屏
+function isLandscape() {
+    return window.innerWidth > window.innerHeight;
+}
+
+// ✅ 控制按钮图标（⛶ / 🡸）
 function updateButtonIcon() {
     const btn = document.getElementById('FullFillButton');
     if (!btn) return;
     btn.innerHTML = isFullFilled ? '🡸' : '⛶';
 }
 
-// ✅【新增】进入沉浸式铺满全屏
+// ✅ 进入铺满全屏（沉浸 + 锁横屏）
 async function enterFullFilled() {
     const iframe = document.getElementById('VideoPlayerFrame');
     if (!iframe) return;
@@ -463,10 +463,7 @@ async function enterFullFilled() {
         if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
         }
-
-        // ✅【新增】发送消息给 iframe 视觉铺满
         iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-
         isFullFilled = true;
         updateButtonIcon();
     } catch (err) {
@@ -474,50 +471,45 @@ async function enterFullFilled() {
     }
 }
 
-// ✅【新增】退出铺满状态
+// ✅ 退出铺满全屏
 async function exitFullFilled() {
     const iframe = document.getElementById('VideoPlayerFrame');
+    if (!iframe) return;
+
     if (document.fullscreenElement) {
         await document.exitFullscreen();
     }
     if (screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
     }
-
-    // ✅【新增】退出时恢复 object-fit 默认
-    if (iframe) {
-        iframe.contentWindow.postMessage({ type: 'resetObjectFit' }, '*');
-    }
-
+    iframe.contentWindow.postMessage({ type: 'resetObjectFit' }, '*');
     isFullFilled = false;
     updateButtonIcon();
 }
 
-    // ✅【新增】告诉 iframe 内部的页面：恢复 object-fit
-    const iframe = document.getElementById('VideoPlayerFrame');
-    if (iframe) {
-        iframe.contentWindow.postMessage({ type: 'resetObjectFit' }, '*');
-    }
-
-    isFullFilled = false;
-    updateButtonIcon();
-}
-
-// ✅【新增】点击按钮切换
+// ✅ 切换铺满行为
 function toggleFullFill() {
     if (!isLandscape()) {
         alert('请横屏后再点击该按钮');
         return;
     }
-function showOrHideFullButton() {
-    console.log('当前是否横屏:', isLandscape());
-    const btn = document.getElementById('FullFillButton');
-    if (!btn) return;
-    // ✅ 只有横屏才显示
-    btn.style.display = isLandscape() ? 'block' : 'none';
-}
     isFullFilled ? exitFullFilled() : enterFullFilled();
 }
+
+// ✅ 控制按钮是否显示（仅横屏）
+function showOrHideFullButton() {
+    const btn = document.getElementById('FullFillButton');
+    if (!btn) return;
+    console.log('当前是否横屏:', isLandscape());
+    btn.style.display = isLandscape() ? 'block' : 'none';
+}
+
+// ✅ 页面初始化时判断一次
+showOrHideFullButton();
+
+// ✅ 监听横竖屏变化
+window.addEventListener('orientationchange', showOrHideFullButton);
+window.addEventListener('resize', showOrHideFullButton);
 </script>
 </body>
 </html>
