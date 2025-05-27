@@ -460,18 +460,35 @@ function createFullscreenButtonIfLandscape() {
     fullscreenBtn.style.border = "none";
     fullscreenBtn.style.borderRadius = "5px";
 
+    function isLandscape() {
+    return window.matchMedia("(orientation: landscape)").matches;
+  }
+
+  if (isLandscape()) {
+    const fullscreenBtn = document.createElement("button");
+    fullscreenBtn.innerText = "⛶ 拉满全屏";
+    fullscreenBtn.style.cssText = "position: fixed; top: 10px; right: 10px; z-index: 9999; font-size: 18px; padding: 6px 12px;";
+
     fullscreenBtn.addEventListener("click", () => {
       const iframe = document.getElementById("videoPlayer");
-      if (iframe?.contentWindow) {
-        iframe.contentWindow.postMessage({ type: "setObjectFitCover" }, "*");
-      } else {
-        alert("视频尚未加载");
+      if (!iframe) {
+        alert("找不到 iframe");
+        return;
+      }
+
+      console.log('🔘 拉满按钮被点击');
+      console.log('🎯 iframe src:', iframe.src);
+
+      try {
+        iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
+        console.log('📤 消息已发出：{ type: setObjectFitCover }');
+      } catch (e) {
+        console.error('❌ 发送失败:', e);
       }
     });
 
     document.body.appendChild(fullscreenBtn);
   }
-}
 
 window.addEventListener("load", createFullscreenButtonIfLandscape);
 
