@@ -406,31 +406,33 @@ function showToast(message) {
 }
 
 // 接收父窗口指令控制视频铺满
-window.addEventListener('message', (event) => {
-    if (!event.data || !event.data.type) return;
+window.addEventListener("load", () => {
+  window.addEventListener("message", (event) => {
     const video = document.querySelector('video');
+    if (!event.data || !event.data.type) return;
     if (!video) {
-        showToast('❌ 找不到 <video> 元素');
-        return;
+      showToast('❌ 找不到 <video> 元素');
+      return;
     }
 
     if (event.data.type === 'setObjectFitCover') {
-        video.style.objectFit = 'cover';
-        video.style.width = '100vw';
-        video.style.height = '100vh';
-        video.style.position = 'absolute';
-        video.style.top = '0';
-        video.style.left = '0';
-        showToast('✅ 拉满模式已触发');
+      video.style.objectFit = 'cover';
+      video.style.width = '100vw';
+      video.style.height = '100vh';
+      video.style.position = 'absolute';
+      video.style.top = '0';
+      video.style.left = '0';
+      showToast('✅ 拉满模式已触发');
     } else if (event.data.type === 'resetObjectFit') {
-        video.style.objectFit = '';
-        video.style.width = '';
-        video.style.height = '';
-        video.style.position = '';
-        video.style.top = '';
-        video.style.left = '';
-        showToast('🔄 退出拉满模式');
+      video.style.objectFit = '';
+      video.style.width = '';
+      video.style.height = '';
+      video.style.position = '';
+      video.style.top = '';
+      video.style.left = '';
+      showToast('🔄 退出拉满模式');
     }
+  });
 });
 </script>
 </body>
