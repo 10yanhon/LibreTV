@@ -1122,15 +1122,16 @@ function showVideoPlayer(url) {
     document.body.appendChild(videoPlayerFrame);
     videoPlayerFrame.focus();
 
-    // ✅【新增】创建“铺满全屏”按钮（先创建再隐藏）
+    // ✅【新增】仅在横屏状态下创建“铺满全屏”按钮
+if (isLandscape()) {
     const fullBtn = document.createElement('button');
     fullBtn.id = 'FullFillButton';
     fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
-    fullBtn.style.display = 'none'; // 默认隐藏
+    fullBtn.style.display = 'block';
     fullBtn.innerHTML = '⛶';
     fullBtn.onclick = toggleFullFill;
     document.body.appendChild(fullBtn);
-
+}
     // ✅【新增】监听屏幕旋转控制按钮显隐
     window.addEventListener('orientationchange', showOrHideFullButton);
     window.addEventListener('resize', showOrHideFullButton);
