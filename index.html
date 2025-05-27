@@ -444,65 +444,55 @@ function isLandscape() {
 }
 
 function createFullscreenButtonIfLandscape() {
+  // 不重复插入
   if (document.getElementById("fullscreenBtn")) return;
 
-  if (isLandscape()) {
-    const fullscreenBtn = document.createElement("button");
-    fullscreenBtn.id = "fullscreenBtn";
-    fullscreenBtn.textContent = "⛶ 拉满全屏";
-    fullscreenBtn.style.position = "fixed";
-    fullscreenBtn.style.bottom = "20px";
-    fullscreenBtn.style.right = "20px";
-    fullscreenBtn.style.zIndex = "9999";
-    fullscreenBtn.style.padding = "10px";
-    fullscreenBtn.style.background = "#000";
-    fullscreenBtn.style.color = "#fff";
-    fullscreenBtn.style.border = "none";
-    fullscreenBtn.style.borderRadius = "5px";
+  // 确保横屏并且播放器已加载
+  const iframe = document.getElementById("VideoPlayerFrame");
+  if (!isLandscape() || !iframe) return;
 
-    function isLandscape() {
-    return window.matchMedia("(orientation: landscape)").matches;
-  }
+  // 创建按钮
+  const fullscreenBtn = document.createElement("button");
+  fullscreenBtn.id = "fullscreenBtn";
+  fullscreenBtn.textContent = "⛶ 拉满全屏";
+  fullscreenBtn.style.position = "fixed";
+  fullscreenBtn.style.bottom = "20px";
+  fullscreenBtn.style.right = "20px";
+  fullscreenBtn.style.zIndex = "9999";
+  fullscreenBtn.style.padding = "10px";
+  fullscreenBtn.style.background = "#000";
+  fullscreenBtn.style.color = "#fff";
+  fullscreenBtn.style.border = "none";
+  fullscreenBtn.style.borderRadius = "5px";
 
-  if (isLandscape()) {
-    const fullscreenBtn = document.createElement("button");
-    fullscreenBtn.innerText = "⛶ 拉满全屏";
-    fullscreenBtn.style.cssText = "position: fixed; top: 10px; right: 10px; z-index: 9999; font-size: 18px; padding: 6px 12px;";
+  // 按钮点击发送 postMessage 给 iframe
+  fullscreenBtn.addEventListener("click", () => {
+    try {
+      iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
+      console.log('📤 已发送 postMessage：{ type: setObjectFitCover }');
+    } catch (e) {
+      console.error('❌ 发送失败:', e);
+    }
+  });
 
-    fullscreenBtn.addEventListener("click", () => {
-      const iframe = document.getElementById("videoPlayer");
-      if (!iframe) {
-        alert("找不到 iframe");
-        return;
-      }
+  document.body.appendChild(fullscreenBtn);
+}
 
-      console.log('🔘 拉满按钮被点击');
-      console.log('🎯 iframe src:', iframe.src);
-
-      try {
-        iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-        console.log('📤 消息已发出：{ type: setObjectFitCover }');
-      } catch (e) {
-        console.error('❌ 发送失败:', e);
-      }
-    });
-
-    document.body.appendChild(fullscreenBtn);
-  }
-
+// 页面加载时检查是否应插入按钮
 window.addEventListener("load", createFullscreenButtonIfLandscape);
 
+// 横竖屏切换时动态增删按钮
 window.addEventListener("orientationchange", () => {
   setTimeout(() => {
     const btn = document.getElementById("fullscreenBtn");
+    const iframe = document.getElementById("VideoPlayerFrame");
     if (!isLandscape() && btn) {
       btn.remove();
-    } else if (isLandscape() && !btn) {
+    } else if (isLandscape() && !btn && iframe) {
       createFullscreenButtonIfLandscape();
     }
   }, 500);
 });
-
 // ✅ 显示或隐藏“⛶ 拉满全屏”按钮（仅横屏时显示）
 function showOrHideFullButton() {
     const btn = document.getElementById('FullFillButton');
