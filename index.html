@@ -443,37 +443,57 @@ function isLandscape() {
   return window.innerWidth > window.innerHeight;
 }
 
-// ✅ 控制“⛶ 拉满”按钮显示或隐藏
-function showOrHideFullButton() {
-  const button = document.getElementById('FullFillButton');
-  const iframe = document.getElementById('VideoPlayerFrame');
-  if (isLandscape() && iframe) {
-    if (!button) createFullFillButton();
-  } else {
-    if (button) button.remove();
-  }
-}
-
-// ✅ 创建“⛶ 拉满”按钮
+// ✅ 创建“拉满全屏”按钮（仅在横屏状态下执行）
 function createFullFillButton() {
+  if (!isLandscape()) return; // ✅ 明确拦截竖屏
+  if (document.getElementById('FullFillButton')) return;
+
+  const iframe = document.getElementById('VideoPlayerFrame');
+  if (!iframe) return;
+
   const button = document.createElement('button');
   button.id = 'FullFillButton';
-  button.innerText = '⛶ 拉满全屏';
-  button.dataset.state = ''; // 默认非 expanded 状态
-  button.className = 'fixed top-4 right-4 z-50 bg-black text-white px-3 py-1 rounded';
+  button.textContent = '⛶';
+  button.style.position = 'fixed';
+  button.style.top = '12px';
+  button.style.right = '12px';
+  button.style.zIndex = '9999';
+  button.style.padding = '6px 10px';
+  button.style.fontSize = '18px';
+  button.style.border = 'none';
+  button.style.borderRadius = '4px';
+  button.style.background = 'rgba(0,0,0,0.6)';
+  button.style.color = '#fff';
+  button.style.cursor = 'pointer';
+
+  let expanded = false;
   button.onclick = () => {
-    const iframe = document.getElementById('VideoPlayerFrame');
-    if (iframe) {
-      const state = button.dataset.state === 'expanded' ? 'shrink' : 'expand';
-      iframe.contentWindow.postMessage(state, '*');
-      button.dataset.state = state === 'expand' ? 'expanded' : '';
-      button.innerText = state === 'expand' ? '⛶ 还原尺寸' : '⛶ 拉满全屏';
+    const playerFrame = document.getElementById('VideoPlayerFrame');
+    if (playerFrame) {
+      playerFrame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
+      expanded = !expanded;
     }
   };
+
   document.body.appendChild(button);
 }
 
-// ✅ 播放器打开函数
+// ✅ 横竖屏切换时自动移除或创建按钮
+function showOrHideFullButton() {
+  const btn = document.getElementById('FullFillButton');
+  if (!isLandscape()) {
+    if (btn) btn.remove();
+  } else {
+    if (!btn && document.getElementById('VideoPlayerFrame')) {
+      createFullFillButton();
+    }
+  }
+}
+
+window.addEventListener('resize', showOrHideFullButton);
+window.addEventListener('orientationchange', showOrHideFullButton);
+
+// ✅ 播放器打开函数（仅在横屏时注册按钮）
 function showVideoPlayer(url) {
   const detailModal = document.getElementById('modal');
   if (detailModal) detailModal.classList.add('hidden');
@@ -486,13 +506,14 @@ function showVideoPlayer(url) {
   videoPlayerFrame.src = url;
   document.body.appendChild(videoPlayerFrame);
 
+  // ✅ 打开时如果是横屏，立即创建按钮
   if (isLandscape()) {
     createFullFillButton();
   }
 
-  window.addEventListener('orientationchange', showOrHideFullButton);
+  // ✅ 注册按钮动态监测（横竖切换）
   window.addEventListener('resize', showOrHideFullButton);
-  showOrHideFullButton();
+  window.addEventListener('orientationchange', showOrHideFullButton);
 
   videoPlayerFrame.focus();
 }
