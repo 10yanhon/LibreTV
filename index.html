@@ -443,13 +443,11 @@ function isLandscape() {
   return window.innerWidth > window.innerHeight;
 }
 
-// ✅ 创建“⛶ 拉满全屏”按钮
+// ✅ 创建“⛶ 拉满全屏”按钮（仅在横屏+iframe存在）
 function createFullFillButton() {
-  // ⛔️ 再次确认横屏
-  if (!isLandscape()) return;
-
   const iframe = document.getElementById('VideoPlayerFrame');
-  if (!iframe || document.getElementById('FullFillButton')) return;
+  const exists = document.getElementById('FullFillButton');
+  if (!isLandscape() || !iframe || exists) return;
 
   const button = document.createElement('button');
   button.id = 'FullFillButton';
@@ -468,9 +466,9 @@ function createFullFillButton() {
 
   let expanded = false;
   button.onclick = () => {
-    const playerFrame = document.getElementById('VideoPlayerFrame');
-    if (playerFrame) {
-      playerFrame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
+    const frame = document.getElementById('VideoPlayerFrame');
+    if (frame) {
+      frame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
       expanded = !expanded;
     }
   };
@@ -478,20 +476,17 @@ function createFullFillButton() {
   document.body.appendChild(button);
 }
 
-// ✅ 横竖屏变化时检查按钮是否应存在
+// ✅ 判断是否应该显示按钮（横屏 + iframe 存在）
 function showOrHideFullButton() {
-  const btn = document.getElementById('FullFillButton');
   const iframe = document.getElementById('VideoPlayerFrame');
+  const button = document.getElementById('FullFillButton');
 
-  if (!isLandscape() || !iframe) {
-    if (btn) btn.remove();
+  if (isLandscape() && iframe) {
+    if (!button) createFullFillButton();
   } else {
-    if (!btn) createFullFillButton();
+    if (button) button.remove();
   }
 }
-
-window.addEventListener('resize', showOrHideFullButton);
-window.addEventListener('orientationchange', showOrHideFullButton);
 
 // ✅ 播放器打开函数
 function showVideoPlayer(url) {
@@ -505,12 +500,16 @@ function showVideoPlayer(url) {
   videoPlayerFrame.className = 'fixed w-full h-screen z-40';
   videoPlayerFrame.src = url;
 
+  // 等 iframe 插入后再判断是否应插入按钮
+  videoPlayerFrame.onload = () => {
+    showOrHideFullButton(); // 确保在 iframe 加载后判断横屏状态
+  };
+
   document.body.appendChild(videoPlayerFrame);
 
-  // ✅ 等待 DOM 插入后再检查横屏并创建按钮（避免 race）
-  setTimeout(() => {
-    showOrHideFullButton();
-  }, 100); // ⏱️ 小延迟，确保 iframe 可被读取
+  // 监听横竖屏变化
+  window.addEventListener('resize', showOrHideFullButton);
+  window.addEventListener('orientationchange', showOrHideFullButton);
 }
 
 // ✅ 播放器关闭函数
