@@ -460,6 +460,9 @@ window.addEventListener('orientationchange', notifyParent);
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(notifyParent, 300); // 页面加载后初次同步一次
 });
+window.addEventListener("message", (event) => {
+  alert("Message received: " + JSON.stringify(event.data));
+});
 </script>
 </body>
 </html>
