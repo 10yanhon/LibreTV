@@ -443,13 +443,13 @@ function isLandscape() {
   return window.innerWidth > window.innerHeight;
 }
 
-// ✅ 创建“拉满全屏”按钮（仅在横屏状态下执行）
+// ✅ 创建“⛶ 拉满全屏”按钮
 function createFullFillButton() {
-  if (!isLandscape()) return; // ✅ 明确拦截竖屏
-  if (document.getElementById('FullFillButton')) return;
+  // ⛔️ 再次确认横屏
+  if (!isLandscape()) return;
 
   const iframe = document.getElementById('VideoPlayerFrame');
-  if (!iframe) return;
+  if (!iframe || document.getElementById('FullFillButton')) return;
 
   const button = document.createElement('button');
   button.id = 'FullFillButton';
@@ -478,22 +478,22 @@ function createFullFillButton() {
   document.body.appendChild(button);
 }
 
-// ✅ 横竖屏切换时自动移除或创建按钮
+// ✅ 横竖屏变化时检查按钮是否应存在
 function showOrHideFullButton() {
   const btn = document.getElementById('FullFillButton');
-  if (!isLandscape()) {
+  const iframe = document.getElementById('VideoPlayerFrame');
+
+  if (!isLandscape() || !iframe) {
     if (btn) btn.remove();
   } else {
-    if (!btn && document.getElementById('VideoPlayerFrame')) {
-      createFullFillButton();
-    }
+    if (!btn) createFullFillButton();
   }
 }
 
 window.addEventListener('resize', showOrHideFullButton);
 window.addEventListener('orientationchange', showOrHideFullButton);
 
-// ✅ 播放器打开函数（仅在横屏时注册按钮）
+// ✅ 播放器打开函数
 function showVideoPlayer(url) {
   const detailModal = document.getElementById('modal');
   if (detailModal) detailModal.classList.add('hidden');
@@ -504,18 +504,13 @@ function showVideoPlayer(url) {
   videoPlayerFrame.id = 'VideoPlayerFrame';
   videoPlayerFrame.className = 'fixed w-full h-screen z-40';
   videoPlayerFrame.src = url;
+
   document.body.appendChild(videoPlayerFrame);
 
-  // ✅ 打开时如果是横屏，立即创建按钮
-  if (isLandscape()) {
-    createFullFillButton();
-  }
-
-  // ✅ 注册按钮动态监测（横竖切换）
-  window.addEventListener('resize', showOrHideFullButton);
-  window.addEventListener('orientationchange', showOrHideFullButton);
-
-  videoPlayerFrame.focus();
+  // ✅ 等待 DOM 插入后再检查横屏并创建按钮（避免 race）
+  setTimeout(() => {
+    showOrHideFullButton();
+  }, 100); // ⏱️ 小延迟，确保 iframe 可被读取
 }
 
 // ✅ 播放器关闭函数
