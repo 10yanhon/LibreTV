@@ -445,5 +445,21 @@ window.addEventListener("message", (event) => {
   }
 });
 </script>
+<script>
+// 横屏判断与父页面通知
+function isLandscape() {
+    return window.innerWidth > window.innerHeight;
+}
+
+function notifyParent() {
+    window.parent.postMessage({ type: 'orientationChange', landscape: isLandscape() }, '*');
+}
+
+window.addEventListener('resize', notifyParent);
+window.addEventListener('orientationchange', notifyParent);
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(notifyParent, 300); // 页面加载后初次同步一次
+});
+</script>
 </body>
 </html>
