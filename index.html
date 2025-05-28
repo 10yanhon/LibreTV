@@ -515,5 +515,40 @@ window.addEventListener("resize", showOrHideFullButton);
 
 setInterval(debugOrientation, 2000);   
 </script>
+<script>
+// ✅ 判断是否为横屏状态
+function isLandscape() {
+  return window.innerWidth > window.innerHeight;
+}
+
+// ✅ 创建调试信息容器
+const debugDiv = document.createElement("div");
+debugDiv.style.position = "fixed";
+debugDiv.style.bottom = "0";
+debugDiv.style.left = "0";
+debugDiv.style.background = "rgba(0,0,0,0.8)";
+debugDiv.style.color = "lime";
+debugDiv.style.fontSize = "12px";
+debugDiv.style.padding = "6px";
+debugDiv.style.zIndex = "9999";
+debugDiv.style.whiteSpace = "pre-line";
+document.body.appendChild(debugDiv);
+
+// ✅ 实时显示方向判断信息
+function debugOrientation() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isMatch = window.matchMedia("(orientation: landscape)").matches;
+  const screenType = screen.orientation?.type || "unknown";
+
+  debugDiv.innerText = 
+    "✅ 当前宽高：" + width + " × " + height + "\n" +
+    "✅ matchMedia 是否横屏：" + isMatch + "\n" +
+    "✅ screen.orientation.type：" + screenType + "\n" +
+    "✅ isLandscape() 判断结果：" + isLandscape();
+}
+
+setInterval(debugOrientation, 2000);
+</script>
 </body>
 </html>
