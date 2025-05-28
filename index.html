@@ -438,96 +438,56 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-  // ✅ 判断是否为横屏
-  function isLandscape() {
-    return window.matchMedia("(orientation: landscape)").matches;
-  }
+function isLandscape() {
+  return window.matchMedia("(orientation: landscape)").matches;
+}
 
-  // ✅ 创建“拉满全屏”按钮
-  function createFullFillButton() {
-    if (document.getElementById("FullFillButton")) return;
+function createFullscreenButton() {
+  if (!isLandscape()) return; // ❗ 保证只在横屏时创建
+  if (document.getElementById("fullscreenBtn")) return; // 避免重复创建
 
-    const button = document.createElement("button");
-    button.id = "FullFillButton";
-    button.innerText = "⛶ 拉满全屏";
-    button.style.position = "fixed";
-    button.style.bottom = "20px";
-    button.style.right = "20px";
-    button.style.zIndex = "9999";
-    button.style.padding = "10px";
-    button.style.backgroundColor = "#000";
-    button.style.color = "#fff";
-    button.style.border = "none";
-    button.style.borderRadius = "5px";
-    button.style.fontSize = "16px";
-    button.style.opacity = "0.7";
+  const iframe = document.getElementById("VideoPlayerFrame");
+  if (!iframe) return; // ❗ iframe 未加载则不创建
 
-    button.addEventListener("click", () => {
-      const iframe = document.getElementById("VideoPlayerFrame");
-      if (iframe) {
-        iframe.contentWindow.postMessage("expand", "*");
-      }
-    });
+  const btn = document.createElement("button");
+  btn.id = "fullscreenBtn";
+  btn.innerText = "⛶ 拉满全屏";
+  btn.style.position = "fixed";
+  btn.style.bottom = "80px";
+  btn.style.right = "20px";
+  btn.style.zIndex = "9999";
+  btn.style.padding = "10px 14px";
+  btn.style.fontSize = "16px";
+  btn.style.borderRadius = "8px";
+  btn.style.backgroundColor = "#222";
+  btn.style.color = "#fff";
+  btn.style.border = "none";
+  btn.style.opacity = "0.8";
 
-    document.body.appendChild(button);
-  }
-
-  // ✅ 显示或移除按钮（横屏时创建，竖屏时移除）
-  function showOrHideFullButton() {
-    const btn = document.getElementById("FullFillButton");
+  btn.onclick = () => {
     const iframe = document.getElementById("VideoPlayerFrame");
-
-    if (isLandscape() && iframe) {
-      if (!btn) createFullFillButton();
-    } else {
-      if (btn) btn.remove();
+    if (iframe) {
+      iframe.contentWindow.postMessage({ type: "TOGGLE_FULLSCREEN" }, "*");
     }
+  };
+
+  document.body.appendChild(btn);
+}
+
+// ✅ 每次窗口变化都重新判断（防止旋转后按钮错误显示）
+window.addEventListener("resize", () => {
+  const btn = document.getElementById("fullscreenBtn");
+  if (!isLandscape()) {
+    if (btn) btn.remove(); // ❗ 竖屏时移除按钮
+  } else {
+    createFullscreenButton(); // ❗ 横屏时尝试创建
   }
+});
 
-  // ✅ 当屏幕方向变化或页面元素变化时判断
-  window.addEventListener("resize", showOrHideFullButton);
-  window.addEventListener("orientationchange", showOrHideFullButton);
-
-  const observer = new MutationObserver(showOrHideFullButton);
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // ✅ 播放器打开函数（无改动）
-  function showVideoPlayer(url) {
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
-    document.getElementById('resultsArea').classList.add('hidden');
-    document.getElementById('doubanArea').classList.add('hidden');
-
-    const videoPlayerFrame = document.createElement('iframe');
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    document.body.appendChild(videoPlayerFrame);
-
-    videoPlayerFrame.focus();
-
-    // 立即判断是否显示按钮
-    showOrHideFullButton();
-  }
-
-  // ✅ 播放器关闭函数（无改动）
-  function closeVideoPlayer(home = false) {
-    const fullBtn = document.getElementById('FullFillButton');
-    if (fullBtn) fullBtn.remove();
-
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) videoPlayerFrame.remove();
-
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
-
-    document.getElementById('resultsArea').classList.remove('hidden');
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-      document.getElementById('doubanArea').classList.remove('hidden');
-    }
-
-    if (home) window.location.href = '/';
-  }
+// ✅ 初始时也检查一次（如 iframe 已加载）
+window.addEventListener("load", () => {
+  setTimeout(() => createFullscreenButton(), 800); // 给 iframe 一点时间加载
+});
 </script>
 </body>
 </html>
