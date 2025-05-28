@@ -354,82 +354,91 @@
     <script src="js/player.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    document.body.addEventListener('click', function (event) {
-        const homeButton = event.target.closest('#homeButton');
-        if (homeButton) {
-            event.preventDefault();
-            event.stopPropagation();
+  // 优雅的首页按钮点击处理
+  document.body.addEventListener('click', function (event) {
+    const homeButton = event.target.closest('#homeButton');
+    if (homeButton) {
+      event.preventDefault();
+      event.stopPropagation();
 
-            if (window.self !== window.top) {
-                try {
-                    window.parent.closeVideoPlayer && window.parent.closeVideoPlayer(true);
-                    return;
-                } catch (e) {
-                    console.error('调用父窗口 closeVideoPlayer 失败:', e);
-                }
-            }
-
-            try {
-                window.location.href = '/';
-            } catch (e) {
-                try {
-                    window.location.replace('/');
-                } catch (e2) {
-                    window.location.assign('/');
-                }
-            }
-
-            return false;
+      if (window.self !== window.top) {
+        try {
+          window.parent.closeVideoPlayer && window.parent.closeVideoPlayer(true);
+          return;
+        } catch (e) {
+          console.error('调用父窗口 closeVideoPlayer 失败:', e);
         }
-    });
-});
+      }
 
-function showToast(message) {
+      try {
+        window.location.href = '/';
+      } catch (e) {
+        try {
+          window.location.replace('/');
+        } catch (e2) {
+          window.location.assign('/');
+        }
+      }
+
+      return false;
+    }
+  });
+
+  // Toast 提示函数
+  function showToast(message) {
     let toast = document.getElementById('debugToast');
     if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'debugToast';
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.left = '50%';
-        toast.style.transform = 'translateX(-50%)';
-        toast.style.background = 'rgba(0,0,0,0.7)';
-        toast.style.color = '#fff';
-        toast.style.padding = '10px 20px';
-        toast.style.borderRadius = '10px';
-        toast.style.zIndex = '9999';
-        document.body.appendChild(toast);
+      toast = document.createElement('div');
+      toast.id = 'debugToast';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '20px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = 'rgba(0,0,0,0.7)';
+      toast.style.color = '#fff';
+      toast.style.padding = '10px 20px';
+      toast.style.borderRadius = '10px';
+      toast.style.zIndex = '9999';
+      document.body.appendChild(toast);
     }
     toast.innerText = message;
     toast.style.display = 'block';
     setTimeout(() => {
-        toast.style.display = 'none';
+      toast.style.display = 'none';
     }, 2000);
-}
-
-// 接收父窗口指令控制视频铺满
-  window.addEventListener("message", (event) => {
-  if (!event.data || typeof event.data !== "object") return;
-  const { type } = event.data;
-  const video = document.querySelector("video") || document.getElementById("video");
-  if (!video) return;
-
-  if (type === "TOGGLE_FULLSCREEN") {
-    video.classList.toggle("fullscreen");
   }
-});
 
-    if (event.data.type === 'setObjectFitCover') {
+  // 告诉父页面播放器进入横屏铺满状态
+  function notifyParentPlayerReady() {
+    window.parent.postMessage({ type: "PLAYER_READY_FULLSCREEN" }, "*");
+  }
+
+  // 监听来自父页面的消息，控制视频铺满等
+  window.addEventListener("message", (event) => {
+    if (!event.data || typeof event.data !== "object") return;
+    const { type } = event.data;
+    const video = document.querySelector("video") || document.getElementById("video");
+    if (!video) return;
+
+    if (type === "TOGGLE_FULLSCREEN") {
+      video.classList.toggle("fullscreen");
+
+      // 通知父页面，状态变化了
+      notifyParentPlayerReady();
+
+      const isFull = video.classList.contains("fullscreen");
+      showToast(isFull ? "已铺满全屏" : "已恢复正常");
+    } else if (type === 'setObjectFitCover') {
       video.style.objectFit = 'cover';
       video.style.width = '100vw';
       video.style.height = '100vh';
       video.style.position = 'absolute';
       video.style.top = '0';
       video.style.left = '0';
-      // ⬇️ 这里加入日志输出
+
       console.log('📐 视频尺寸:', video.getBoundingClientRect());
       showToast('✅ 拉满模式已触发');
-    } else if (event.data.type === 'resetObjectFit') {
+    } else if (type === 'resetObjectFit') {
       video.style.objectFit = '';
       video.style.width = '';
       video.style.height = '';
@@ -437,6 +446,8 @@ function showToast(message) {
       video.style.top = '';
       video.style.left = '';
       showToast('🔄 退出拉满模式');
+    } else if (type === "GO_HOME") {
+      window.location.href = "/";
     }
   });
 });
