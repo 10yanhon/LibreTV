@@ -438,117 +438,65 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-// ✅ 判断是否为横屏状态
+// ✅ 判断是否为横屏
 function isLandscape() {
-  return screen.orientation?.type?.startsWith("landscape") ||
-         window.matchMedia("(orientation: landscape)").matches;
+  return window.matchMedia("(orientation: landscape)").matches;
 }
 
-// ✅ 控制按钮的显示与隐藏
-function showOrHideFullButton() {
-  const btn = document.getElementById("FullFillButton");
-  if (!isLandscape() && btn) {
-    btn.remove();
-  }
-}
-
-// ✅ 创建“⛶ 拉满全屏”按钮
+// ✅ 创建铺满全屏按钮（仅在横屏下执行）
 function createFullFillButton() {
-  // 再次确保横屏且 iframe 存在
-  if (!isLandscape()) return;
-
-  const iframe = document.getElementById("VideoPlayerFrame");
-  if (!iframe) return;
-
   if (document.getElementById("FullFillButton")) return;
 
   const button = document.createElement("button");
   button.id = "FullFillButton";
   button.innerText = "⛶";
-  button.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 10px 16px;
-    font-size: 20px;
-    background: rgba(0,0,0,0.6);
-    color: white;
-    border: none;
-    border-radius: 6px;
-  `;
-  button.onclick = () => {
+  button.style.position = "fixed";
+  button.style.bottom = "20px";
+  button.style.right = "20px";
+  button.style.zIndex = "9999";
+  button.style.padding = "10px";
+  button.style.fontSize = "24px";
+  button.style.background = "#000";
+  button.style.color = "#fff";
+  button.style.border = "none";
+  button.style.borderRadius = "6px";
+  button.style.opacity = "0.7";
+
+  let expanded = false;
+  button.addEventListener("click", () => {
     const iframe = document.getElementById("VideoPlayerFrame");
-    if (iframe) {
-      const isFull = button.classList.toggle("filled");
-      iframe.contentWindow.postMessage(isFull ? "expand" : "shrink", "*");
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(expanded ? "shrink" : "expand", "*");
+      expanded = !expanded;
     }
-  };
+  });
+
   document.body.appendChild(button);
 }
 
-// ✅ 延迟观察 iframe 是否插入并符合横屏
-const observer = new MutationObserver(() => {
-  setTimeout(() => {
-    if (isLandscape() && !document.getElementById("FullFillButton")) {
-      createFullFillButton();
-    }
-  }, 500);
-});
+// ✅ 清除按钮
+function removeFullFillButton() {
+  const btn = document.getElementById("FullFillButton");
+  if (btn) btn.remove();
+}
 
-observer.observe(document.body, { childList: true, subtree: true });
+// ✅ 控制按钮显示隐藏（根据横屏状态 + iframe 存在）
+function showOrHideFullButton() {
+  const iframe = document.getElementById("VideoPlayerFrame");
+  if (iframe && isLandscape()) {
+    createFullFillButton();
+  } else {
+    removeFullFillButton();
+  }
+}
 
-// ✅ 方向变化时移除按钮（如转为竖屏）
-window.addEventListener("orientationchange", showOrHideFullButton);
+// ✅ 监听屏幕旋转与窗口变化
 window.addEventListener("resize", showOrHideFullButton);
- function debugOrientation() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const isMatch = window.matchMedia("(orientation: landscape)").matches;
-  const screenType = screen.orientation?.type;
+window.addEventListener("orientationchange", showOrHideFullButton);
 
-  console.log("✅ 当前宽高：", width, height);
-  console.log("✅ matchMedia 是否横屏：", isMatch);
-  console.log("✅ screen.orientation.type：", screenType);
-  console.log("✅ isLandscape() 判断结果：", isLandscape());
-}
-
-setInterval(debugOrientation, 2000);   
-</script>
-<script>
-// ✅ 判断是否为横屏状态
-function isLandscape() {
-  return window.innerWidth > window.innerHeight;
-}
-
-// ✅ 创建调试信息容器
-const debugDiv = document.createElement("div");
-debugDiv.style.position = "fixed";
-debugDiv.style.bottom = "0";
-debugDiv.style.left = "0";
-debugDiv.style.background = "rgba(0,0,0,0.8)";
-debugDiv.style.color = "lime";
-debugDiv.style.fontSize = "12px";
-debugDiv.style.padding = "6px";
-debugDiv.style.zIndex = "9999";
-debugDiv.style.whiteSpace = "pre-line";
-document.body.appendChild(debugDiv);
-
-// ✅ 实时显示方向判断信息
-function debugOrientation() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const isMatch = window.matchMedia("(orientation: landscape)").matches;
-  const screenType = screen.orientation?.type || "unknown";
-
-  debugDiv.innerText = 
-    "✅ 当前宽高：" + width + " × " + height + "\n" +
-    "✅ matchMedia 是否横屏：" + isMatch + "\n" +
-    "✅ screen.orientation.type：" + screenType + "\n" +
-    "✅ isLandscape() 判断结果：" + isLandscape();
-}
-
-setInterval(debugOrientation, 2000);
+// ✅ iframe 变化时也触发判断
+const observer = new MutationObserver(showOrHideFullButton);
+observer.observe(document.body, { childList: true, subtree: true });
 </script>
 </body>
 </html>
