@@ -354,7 +354,7 @@
     <script src="js/player.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // 优雅的首页按钮点击处理
+  // 🧭 1. 监听点击 Home 按钮事件
   document.body.addEventListener('click', function (event) {
     const homeButton = event.target.closest('#homeButton');
     if (homeButton) {
@@ -384,72 +384,65 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Toast 提示函数
-  function showToast(message) {
-    let toast = document.getElementById('debugToast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'debugToast';
-      toast.style.position = 'fixed';
-      toast.style.bottom = '20px';
-      toast.style.left = '50%';
-      toast.style.transform = 'translateX(-50%)';
-      toast.style.background = 'rgba(0,0,0,0.7)';
-      toast.style.color = '#fff';
-      toast.style.padding = '10px 20px';
-      toast.style.borderRadius = '10px';
-      toast.style.zIndex = '9999';
-      document.body.appendChild(toast);
-    }
-    toast.innerText = message;
-    toast.style.display = 'block';
-    setTimeout(() => {
-      toast.style.display = 'none';
-    }, 2000);
-  }
-
-  // 告诉父页面播放器进入横屏铺满状态
+  // 📢 2. 向父页面发消息：播放器准备就绪
   function notifyParentPlayerReady() {
-    window.parent.postMessage({ type: "PLAYER_READY_FULLSCREEN" }, "*");
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "PLAYER_READY_FULLSCREEN" }, "*");
+    }
   }
 
-  // 监听来自父页面的消息，控制视频铺满等
-  window.addEventListener("message", (event) => {
-    if (!event.data || typeof event.data !== "object") return;
-    const { type } = event.data;
-    const video = document.querySelector("video") || document.getElementById("video");
-    if (!video) return;
+  // ✅ 自动触发通知
+  notifyParentPlayerReady();
+});
 
-    if (type === "TOGGLE_FULLSCREEN") {
-      video.classList.toggle("fullscreen");
+// 🍞 3. Toast 提示函数
+function showToast(message) {
+  let toast = document.getElementById('debugToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'debugToast';
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.background = 'rgba(0,0,0,0.7)';
+    toast.style.color = '#fff';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '10px';
+    toast.style.zIndex = '9999';
+    document.body.appendChild(toast);
+  }
+  toast.innerText = message;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 2000);
+}
 
-      // 通知父页面，状态变化了
-      notifyParentPlayerReady();
+// 🔁 4. 接收主页面指令控制视频铺满与还原
+window.addEventListener("message", (event) => {
+  if (!event.data || typeof event.data !== "object") return;
+  const video = document.querySelector("video") || document.getElementById("video");
+  if (!video) return;
 
-      const isFull = video.classList.contains("fullscreen");
-      showToast(isFull ? "已铺满全屏" : "已恢复正常");
-    } else if (type === 'setObjectFitCover') {
-      video.style.objectFit = 'cover';
-      video.style.width = '100vw';
-      video.style.height = '100vh';
-      video.style.position = 'absolute';
-      video.style.top = '0';
-      video.style.left = '0';
-
-      console.log('📐 视频尺寸:', video.getBoundingClientRect());
-      showToast('✅ 拉满模式已触发');
-    } else if (type === 'resetObjectFit') {
-      video.style.objectFit = '';
-      video.style.width = '';
-      video.style.height = '';
-      video.style.position = '';
-      video.style.top = '';
-      video.style.left = '';
-      showToast('🔄 退出拉满模式');
-    } else if (type === "GO_HOME") {
-      window.location.href = "/";
-    }
-  });
+  if (event.data.type === 'setObjectFitCover') {
+    video.style.objectFit = 'cover';
+    video.style.width = '100vw';
+    video.style.height = '100vh';
+    video.style.position = 'absolute';
+    video.style.top = '0';
+    video.style.left = '0';
+    console.log('📐 视频尺寸:', video.getBoundingClientRect());
+    showToast('✅ 拉满模式已触发');
+  } else if (event.data.type === 'resetObjectFit') {
+    video.style.objectFit = '';
+    video.style.width = '';
+    video.style.height = '';
+    video.style.position = '';
+    video.style.top = '';
+    video.style.left = '';
+    showToast('🔄 退出拉满模式');
+  }
 });
 </script>
 </body>
