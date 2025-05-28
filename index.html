@@ -438,17 +438,17 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-// 判断是否为横屏
+// 更稳妥判断是否横屏（宽 > 高）
 function isLandscape() {
-    return window.matchMedia("(orientation: landscape)").matches;
+    return window.innerWidth > window.innerHeight;
 }
 
-// 监听屏幕方向变化，横屏后创建“⛶ 拉满全屏”按钮
-function handleOrientationChange() {
-    const existingButton = document.getElementById("fullscreenBtn");
+// 检查横屏 + iframe 存在 + 未已有按钮，再创建
+function handleOrientationAndButton() {
     const iframe = document.getElementById("VideoPlayerFrame");
+    const existingBtn = document.getElementById("fullscreenBtn");
 
-    if (isLandscape() && iframe && !existingButton) {
+    if (isLandscape() && iframe && !existingBtn) {
         const btn = document.createElement("button");
         btn.id = "fullscreenBtn";
         btn.textContent = "⛶";
@@ -474,17 +474,21 @@ function handleOrientationChange() {
         });
 
         document.body.appendChild(btn);
-    } else if (!isLandscape() && existingButton) {
-        // 若竖屏切换回来，移除按钮
-        existingButton.remove();
+    }
+
+    // 如果不是横屏但按钮存在，说明状态不符，移除按钮
+    if (!isLandscape() && existingBtn) {
+        existingBtn.remove();
     }
 }
 
 // 初始判断
-window.addEventListener("DOMContentLoaded", handleOrientationChange);
-// 用户旋转屏幕时触发
-window.addEventListener("orientationchange", () => {
-    setTimeout(handleOrientationChange, 500); // 延迟处理，等待旋转完成
+window.addEventListener("DOMContentLoaded", () => {
+    setTimeout(handleOrientationAndButton, 300);
+});
+// 旋转时判断
+window.addEventListener("resize", () => {
+    setTimeout(handleOrientationAndButton, 300);
 });
 </script>
 </body>
