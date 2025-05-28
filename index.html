@@ -439,58 +439,57 @@
     <script src="js/index-page.js"></script>
 <script>
 function isLandscape() {
-  return window.matchMedia("(orientation: landscape)").matches;
+  return window.innerWidth > window.innerHeight;
 }
 
-// ✅ 延迟执行判断
-function delayedCheckAndCreateButton() {
-  setTimeout(() => {
-    const iframe = document.getElementById('VideoPlayerFrame');
-    const exists = document.getElementById('FullFillButton');
-    if (!iframe || exists) return;
+// ✅ 最终创建按钮函数（仅横屏）
+function createFullFillButton() {
+  // 避免重复创建
+  if (document.getElementById('FullFillButton')) return;
 
-    if (isLandscape()) {
-      const button = document.createElement('button');
-      button.id = 'FullFillButton';
-      button.textContent = '⛶';
-      button.style.position = 'fixed';
-      button.style.top = '12px';
-      button.style.right = '12px';
-      button.style.zIndex = '9999';
-      button.style.padding = '6px 10px';
-      button.style.fontSize = '18px';
-      button.style.border = 'none';
-      button.style.borderRadius = '4px';
-      button.style.background = 'rgba(0,0,0,0.6)';
-      button.style.color = '#fff';
-      button.style.cursor = 'pointer';
+  if (!isLandscape()) return; // 确保确实是横屏
 
-      let expanded = false;
-      button.onclick = () => {
-        const frame = document.getElementById('VideoPlayerFrame');
-        if (frame) {
-          frame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
-          expanded = !expanded;
-        }
-      };
+  const button = document.createElement('button');
+  button.id = 'FullFillButton';
+  button.textContent = '⛶';
+  button.style.position = 'fixed';
+  button.style.top = '12px';
+  button.style.right = '12px';
+  button.style.zIndex = '9999';
+  button.style.padding = '6px 10px';
+  button.style.fontSize = '18px';
+  button.style.border = 'none';
+  button.style.borderRadius = '4px';
+  button.style.background = 'rgba(0,0,0,0.6)';
+  button.style.color = '#fff';
+  button.style.cursor = 'pointer';
 
-      document.body.appendChild(button);
+  let expanded = false;
+  button.onclick = () => {
+    const frame = document.getElementById('VideoPlayerFrame');
+    if (frame) {
+      frame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
+      expanded = !expanded;
     }
-  }, 500); // 延迟 500ms，确保设备旋转与 WebView 状态稳定
+  };
+
+  document.body.appendChild(button);
 }
 
-// ✅ 横屏状态切换时动态判断
-function showOrHideFullButton() {
-  const iframe = document.getElementById('VideoPlayerFrame');
-  const button = document.getElementById('FullFillButton');
+// ✅ 封装稳定延迟创建逻辑
+function tryInjectButtonWithDelay(retry = 3) {
+  if (!isLandscape()) return;
 
-  if (isLandscape() && iframe && !button) {
-    delayedCheckAndCreateButton();
-  } else if (!isLandscape() && button) {
-    button.remove();
-  }
+  setTimeout(() => {
+    if (isLandscape()) {
+      createFullFillButton();
+    } else if (retry > 0) {
+      tryInjectButtonWithDelay(retry - 1); // 最多尝试 3 次
+    }
+  }, 500);
 }
 
+// ✅ 播放器打开
 function showVideoPlayer(url) {
   const detailModal = document.getElementById('modal');
   if (detailModal) detailModal.classList.add('hidden');
@@ -503,15 +502,25 @@ function showVideoPlayer(url) {
   videoPlayerFrame.src = url;
 
   videoPlayerFrame.onload = () => {
-    delayedCheckAndCreateButton();
+    tryInjectButtonWithDelay(); // 只有 iframe 加载完成后才开始判断
   };
 
   document.body.appendChild(videoPlayerFrame);
 
-  window.addEventListener('resize', showOrHideFullButton);
-  window.addEventListener('orientationchange', showOrHideFullButton);
+  window.addEventListener('orientationchange', () => {
+    const btn = document.getElementById('FullFillButton');
+    if (!isLandscape() && btn) btn.remove();
+    else if (isLandscape() && !btn) tryInjectButtonWithDelay();
+  });
+
+  window.addEventListener('resize', () => {
+    const btn = document.getElementById('FullFillButton');
+    if (!isLandscape() && btn) btn.remove();
+    else if (isLandscape() && !btn) tryInjectButtonWithDelay();
+  });
 }
 
+// ✅ 播放器关闭
 function closeVideoPlayer(home = false) {
   const fullBtn = document.getElementById('FullFillButton');
   if (fullBtn) fullBtn.remove();
