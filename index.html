@@ -501,6 +501,19 @@ observer.observe(document.body, { childList: true, subtree: true });
 // ✅ 方向变化时移除按钮（如转为竖屏）
 window.addEventListener("orientationchange", showOrHideFullButton);
 window.addEventListener("resize", showOrHideFullButton);
+ function debugOrientation() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isMatch = window.matchMedia("(orientation: landscape)").matches;
+  const screenType = screen.orientation?.type;
+
+  console.log("✅ 当前宽高：", width, height);
+  console.log("✅ matchMedia 是否横屏：", isMatch);
+  console.log("✅ screen.orientation.type：", screenType);
+  console.log("✅ isLandscape() 判断结果：", isLandscape());
+}
+
+setInterval(debugOrientation, 2000);   
 </script>
 </body>
 </html>
