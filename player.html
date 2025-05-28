@@ -409,16 +409,15 @@ function showToast(message) {
 
 // 接收父窗口指令控制视频铺满
   window.addEventListener("message", (event) => {
-    if (event.data?.type === "setObjectFitCover") {
-      const video = document.getElementById("video");
-      if (video) {
-        video.classList.add("fullscreen");
-        console.log("✅ fullscreen 样式已应用");
-      } else {
-        console.warn("⚠️ 未找到 video 元素");
-      }
-    }
-  });
+  if (!event.data || typeof event.data !== "object") return;
+  const { type } = event.data;
+  const video = document.querySelector("video") || document.getElementById("video");
+  if (!video) return;
+
+  if (type === "TOGGLE_FULLSCREEN") {
+    video.classList.toggle("fullscreen");
+  }
+});
 
     if (event.data.type === 'setObjectFitCover') {
       video.style.objectFit = 'cover';
