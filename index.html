@@ -438,92 +438,54 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-(function () {
-  const BUTTON_ID = "fullScreenButton";
+// 判断是否为横屏
+function isLandscape() {
+    return window.matchMedia("(orientation: landscape)").matches;
+}
 
-  // 更精确的横屏判断（原始 + 备用）
-  function isLandscape() {
-    const orientation = screen.orientation || screen.msOrientation || screen.mozOrientation;
-    if (orientation && orientation.type) {
-      return orientation.type.includes("landscape");
-    }
-    // fallback（保底方案）
-    return window.innerWidth > window.innerHeight;
-  }
+// 监听屏幕方向变化，横屏后创建“⛶ 拉满全屏”按钮
+function handleOrientationChange() {
+    const existingButton = document.getElementById("fullscreenBtn");
+    const iframe = document.getElementById("VideoPlayerFrame");
 
-  function isPlayerActive() {
-    const iframe = document.getElementById("VideoPlayerFrame");
-    return iframe && iframe.offsetParent !== null;
-  }
+    if (isLandscape() && iframe && !existingButton) {
+        const btn = document.createElement("button");
+        btn.id = "fullscreenBtn";
+        btn.textContent = "⛶";
+        btn.title = "拉满全屏";
+        Object.assign(btn.style, {
+            position: "fixed",
+            top: "10px",
+            right: "50%",
+            transform: "translateX(50%)",
+            zIndex: "9999",
+            background: "#222",
+            color: "#fff",
+            border: "1px solid #444",
+            borderRadius: "6px",
+            padding: "6px 10px",
+            fontSize: "16px",
+            cursor: "pointer",
+            opacity: "0.85"
+        });
 
-  function shouldShowFullScreenButton() {
-    return isPlayerActive() && isLandscape();
-  }
+        btn.addEventListener("click", () => {
+            iframe.contentWindow.postMessage({ action: "toggleFillMode" }, "*");
+        });
 
-  function createFullScreenButton() {
-    if (document.getElementById(BUTTON_ID)) return;
+        document.body.appendChild(btn);
+    } else if (!isLandscape() && existingButton) {
+        // 若竖屏切换回来，移除按钮
+        existingButton.remove();
+    }
+}
 
-    const btn = document.createElement("button");
-    btn.id = BUTTON_ID;
-    btn.textContent = "⛶ 拉满全屏";
-
-    Object.assign(btn.style, {
-      position: "fixed",
-      bottom: "12px",
-      right: "12px",
-      zIndex: "9999",
-      padding: "6px 12px",
-      background: "#000",
-      color: "#fff",
-      borderRadius: "5px",
-      fontSize: "14px",
-      opacity: "0.85",
-      border: "none",
-      cursor: "pointer",
-    });
-
-    btn.onclick = () => {
-      // 双重验证横屏 + 播放器存在才发指令
-      if (shouldShowFullScreenButton()) {
-        const iframe = document.getElementById("VideoPlayerFrame");
-        if (iframe) {
-          iframe.contentWindow.postMessage({ action: "toggleFullScreen" }, "*");
-        }
-      } else {
-        console.log("⛶ 按钮被点击时环境非法（竖屏或播放器不存在）");
-      }
-    };
-
-    document.body.appendChild(btn);
-  }
-
-  function removeFullScreenButton() {
-    const btn = document.getElementById(BUTTON_ID);
-    if (btn) btn.remove();
-  }
-
-  function updateButtonState() {
-    if (shouldShowFullScreenButton()) {
-      createFullScreenButton();
-    } else {
-      removeFullScreenButton();
-    }
-  }
-
-  // 监听 DOM 变化（播放器出现/消失）
-  const observer = new MutationObserver(updateButtonState);
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // 监听方向变化
-  if (screen.orientation && screen.orientation.addEventListener) {
-    screen.orientation.addEventListener("change", updateButtonState);
-  }
-  window.addEventListener("resize", updateButtonState);
-  window.addEventListener("orientationchange", updateButtonState);
-
-  // 初始执行一次
-  window.addEventListener("DOMContentLoaded", updateButtonState);
-})();
+// 初始判断
+window.addEventListener("DOMContentLoaded", handleOrientationChange);
+// 用户旋转屏幕时触发
+window.addEventListener("orientationchange", () => {
+    setTimeout(handleOrientationChange, 500); // 延迟处理，等待旋转完成
+});
 </script>
 </body>
 </html>
