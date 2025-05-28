@@ -440,162 +440,80 @@
 <script>
 // ✅ 判断是否为横屏状态
 function isLandscape() {
-  return window.matchMedia("(orientation: landscape)").matches;
+  return window.innerWidth > window.innerHeight;
 }
 
-function createFullscreenButton() {
-  if (document.getElementById("fullscreenBtn")) return;
-
-  const iframe = document.getElementById("VideoPlayerFrame");
-  if (!iframe || !isLandscape()) return;
-
-  const fullscreenBtn = document.createElement("button");
-  fullscreenBtn.id = "fullscreenBtn";
-  fullscreenBtn.textContent = "⛶ 拉满全屏";
-  fullscreenBtn.style.position = "fixed";
-  fullscreenBtn.style.bottom = "20px";
-  fullscreenBtn.style.right = "20px";
-  fullscreenBtn.style.zIndex = "9999";
-  fullscreenBtn.style.padding = "10px";
-  fullscreenBtn.style.background = "#000";
-  fullscreenBtn.style.color = "#fff";
-  fullscreenBtn.style.border = "none";
-  fullscreenBtn.style.borderRadius = "5px";
-
-  fullscreenBtn.addEventListener("click", () => {
-    console.log("⛶ 点击按钮");
-    iframe.contentWindow.postMessage({ type: "setObjectFitCover" }, "*");
-
-    // 强制刷新 iframe 容器尺寸
-    iframe.style.display = "none";
-    iframe.offsetHeight;
-    iframe.style.display = "block";
-  });
-
-  document.body.appendChild(fullscreenBtn);
-}
-
-function removeFullscreenButton() {
-  const btn = document.getElementById("fullscreenBtn");
-  if (btn) btn.remove();
-}
-
-// 监听页面横竖屏变化
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => {
-    if (isLandscape()) {
-      createFullscreenButton();
-    } else {
-      removeFullscreenButton();
-    }
-  }, 500);
-});
-
-// 页面加载后定期检查 iframe 是否出现 + 当前是否横屏
-window.addEventListener("load", () => {
-  const interval = setInterval(() => {
-    const iframe = document.getElementById("VideoPlayerFrame");
-    if (iframe && isLandscape()) {
-      createFullscreenButton();
-      clearInterval(interval);
-    }
-  }, 300);
-});
-
-
-  // 初始检查一次
-  checkAndUpdateFullscreenButton();
-});
-    
-// ✅ 显示或隐藏“⛶ 拉满全屏”按钮（仅横屏时显示）
+// ✅ 控制“⛶ 拉满”按钮显示或隐藏
 function showOrHideFullButton() {
-    const btn = document.getElementById('FullFillButton');
-    if (!btn) return;
-    btn.style.display = isLandscape() ? 'block' : 'none';
+  const button = document.getElementById('FullFillButton');
+  const iframe = document.getElementById('VideoPlayerFrame');
+  if (isLandscape() && iframe) {
+    if (!button) createFullFillButton();
+  } else {
+    if (button) button.remove();
+  }
 }
 
-// ✅ 创建并添加“⛶ 拉满全屏”按钮
+// ✅ 创建“⛶ 拉满”按钮
 function createFullFillButton() {
-    const fullBtn = document.createElement('button');
-    fullBtn.id = 'FullFillButton';
-    fullBtn.className = 'fixed bottom-4 right-4 z-50 bg-black text-white px-3 py-1 rounded-full text-lg';
-    fullBtn.innerHTML = '⛶';
-    fullBtn.style.display = isLandscape() ? 'block' : 'none';
-    fullBtn.onclick = toggleFullFill;
-    document.body.appendChild(fullBtn);
-}
-
-// ✅ 切换视觉拉满
-let isFullFilled = false;
-function toggleFullFill() {
-    if (!isLandscape()) {
-        console.warn('非横屏，⛶ 不允许执行');
-        return;
-    }
-
+  const button = document.createElement('button');
+  button.id = 'FullFillButton';
+  button.innerText = '⛶ 拉满全屏';
+  button.dataset.state = ''; // 默认非 expanded 状态
+  button.className = 'fixed top-4 right-4 z-50 bg-black text-white px-3 py-1 rounded';
+  button.onclick = () => {
     const iframe = document.getElementById('VideoPlayerFrame');
-    if (!iframe) return;
-
-    if (!isFullFilled) {
-        if (iframe.requestFullscreen) iframe.requestFullscreen();
-        else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-        else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
-        else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
-
-        iframe.contentWindow.postMessage({ type: 'setObjectFitCover' }, '*');
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-
-        iframe.contentWindow.postMessage({ type: 'resetObjectFit' }, '*');
+    if (iframe) {
+      const state = button.dataset.state === 'expanded' ? 'shrink' : 'expand';
+      iframe.contentWindow.postMessage(state, '*');
+      button.dataset.state = state === 'expand' ? 'expanded' : '';
+      button.innerText = state === 'expand' ? '⛶ 还原尺寸' : '⛶ 拉满全屏';
     }
-
-    isFullFilled = !isFullFilled;
+  };
+  document.body.appendChild(button);
 }
 
-// ✅ 播放器打开函数（仅在横屏时创建按钮）
+// ✅ 播放器打开函数
 function showVideoPlayer(url) {
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
-    document.getElementById('resultsArea').classList.add('hidden');
-    document.getElementById('doubanArea').classList.add('hidden');
+  const detailModal = document.getElementById('modal');
+  if (detailModal) detailModal.classList.add('hidden');
+  document.getElementById('resultsArea').classList.add('hidden');
+  document.getElementById('doubanArea').classList.add('hidden');
 
-    const videoPlayerFrame = document.createElement('iframe');
-    videoPlayerFrame.id = 'VideoPlayerFrame';
-    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
-    videoPlayerFrame.src = url;
-    document.body.appendChild(videoPlayerFrame);
+  const videoPlayerFrame = document.createElement('iframe');
+  videoPlayerFrame.id = 'VideoPlayerFrame';
+  videoPlayerFrame.className = 'fixed w-full h-screen z-40';
+  videoPlayerFrame.src = url;
+  document.body.appendChild(videoPlayerFrame);
 
-    // ✅ 仅横屏下创建按钮并注册监听
-    if (isLandscape()) {
-        createFullFillButton();
-        window.addEventListener('orientationchange', showOrHideFullButton);
-        window.addEventListener('resize', showOrHideFullButton);
-        showOrHideFullButton();
-    }
+  if (isLandscape()) {
+    createFullFillButton();
+  }
 
-    videoPlayerFrame.focus();
+  window.addEventListener('orientationchange', showOrHideFullButton);
+  window.addEventListener('resize', showOrHideFullButton);
+  showOrHideFullButton();
+
+  videoPlayerFrame.focus();
 }
 
 // ✅ 播放器关闭函数
 function closeVideoPlayer(home = false) {
-    const fullBtn = document.getElementById('FullFillButton');
-    if (fullBtn) fullBtn.remove();
+  const fullBtn = document.getElementById('FullFillButton');
+  if (fullBtn) fullBtn.remove();
 
-    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
-    if (videoPlayerFrame) videoPlayerFrame.remove();
+  const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+  if (videoPlayerFrame) videoPlayerFrame.remove();
 
-    const detailModal = document.getElementById('modal');
-    if (detailModal) detailModal.classList.add('hidden');
+  const detailModal = document.getElementById('modal');
+  if (detailModal) detailModal.classList.add('hidden');
 
-    document.getElementById('resultsArea').classList.remove('hidden');
-    if (localStorage.getItem('doubanEnabled') === 'true') {
-        document.getElementById('doubanArea').classList.remove('hidden');
-    }
+  document.getElementById('resultsArea').classList.remove('hidden');
+  if (localStorage.getItem('doubanEnabled') === 'true') {
+    document.getElementById('doubanArea').classList.remove('hidden');
+  }
 
-    if (home) window.location.href = '/';
+  if (home) window.location.href = '/';
 }
 </script>
 </body>
