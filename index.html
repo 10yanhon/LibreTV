@@ -438,65 +438,96 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-// ✅ 判断是否为横屏
-function isLandscape() {
-  return window.matchMedia("(orientation: landscape)").matches;
-}
-
-// ✅ 创建铺满全屏按钮（仅在横屏下执行）
-function createFullFillButton() {
-  if (document.getElementById("FullFillButton")) return;
-
-  const button = document.createElement("button");
-  button.id = "FullFillButton";
-  button.innerText = "⛶";
-  button.style.position = "fixed";
-  button.style.bottom = "20px";
-  button.style.right = "20px";
-  button.style.zIndex = "9999";
-  button.style.padding = "10px";
-  button.style.fontSize = "24px";
-  button.style.background = "#000";
-  button.style.color = "#fff";
-  button.style.border = "none";
-  button.style.borderRadius = "6px";
-  button.style.opacity = "0.7";
-
-  let expanded = false;
-  button.addEventListener("click", () => {
-    const iframe = document.getElementById("VideoPlayerFrame");
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage(expanded ? "shrink" : "expand", "*");
-      expanded = !expanded;
-    }
-  });
-
-  document.body.appendChild(button);
-}
-
-// ✅ 清除按钮
-function removeFullFillButton() {
-  const btn = document.getElementById("FullFillButton");
-  if (btn) btn.remove();
-}
-
-// ✅ 控制按钮显示隐藏（根据横屏状态 + iframe 存在）
-function showOrHideFullButton() {
-  const iframe = document.getElementById("VideoPlayerFrame");
-  if (iframe && isLandscape()) {
-    createFullFillButton();
-  } else {
-    removeFullFillButton();
+  // ✅ 判断是否为横屏
+  function isLandscape() {
+    return window.matchMedia("(orientation: landscape)").matches;
   }
-}
 
-// ✅ 监听屏幕旋转与窗口变化
-window.addEventListener("resize", showOrHideFullButton);
-window.addEventListener("orientationchange", showOrHideFullButton);
+  // ✅ 创建“拉满全屏”按钮
+  function createFullFillButton() {
+    if (document.getElementById("FullFillButton")) return;
 
-// ✅ iframe 变化时也触发判断
-const observer = new MutationObserver(showOrHideFullButton);
-observer.observe(document.body, { childList: true, subtree: true });
+    const button = document.createElement("button");
+    button.id = "FullFillButton";
+    button.innerText = "⛶ 拉满全屏";
+    button.style.position = "fixed";
+    button.style.bottom = "20px";
+    button.style.right = "20px";
+    button.style.zIndex = "9999";
+    button.style.padding = "10px";
+    button.style.backgroundColor = "#000";
+    button.style.color = "#fff";
+    button.style.border = "none";
+    button.style.borderRadius = "5px";
+    button.style.fontSize = "16px";
+    button.style.opacity = "0.7";
+
+    button.addEventListener("click", () => {
+      const iframe = document.getElementById("VideoPlayerFrame");
+      if (iframe) {
+        iframe.contentWindow.postMessage("expand", "*");
+      }
+    });
+
+    document.body.appendChild(button);
+  }
+
+  // ✅ 显示或移除按钮（横屏时创建，竖屏时移除）
+  function showOrHideFullButton() {
+    const btn = document.getElementById("FullFillButton");
+    const iframe = document.getElementById("VideoPlayerFrame");
+
+    if (isLandscape() && iframe) {
+      if (!btn) createFullFillButton();
+    } else {
+      if (btn) btn.remove();
+    }
+  }
+
+  // ✅ 当屏幕方向变化或页面元素变化时判断
+  window.addEventListener("resize", showOrHideFullButton);
+  window.addEventListener("orientationchange", showOrHideFullButton);
+
+  const observer = new MutationObserver(showOrHideFullButton);
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // ✅ 播放器打开函数（无改动）
+  function showVideoPlayer(url) {
+    const detailModal = document.getElementById('modal');
+    if (detailModal) detailModal.classList.add('hidden');
+    document.getElementById('resultsArea').classList.add('hidden');
+    document.getElementById('doubanArea').classList.add('hidden');
+
+    const videoPlayerFrame = document.createElement('iframe');
+    videoPlayerFrame.id = 'VideoPlayerFrame';
+    videoPlayerFrame.className = 'fixed w-full h-screen z-40';
+    videoPlayerFrame.src = url;
+    document.body.appendChild(videoPlayerFrame);
+
+    videoPlayerFrame.focus();
+
+    // 立即判断是否显示按钮
+    showOrHideFullButton();
+  }
+
+  // ✅ 播放器关闭函数（无改动）
+  function closeVideoPlayer(home = false) {
+    const fullBtn = document.getElementById('FullFillButton');
+    if (fullBtn) fullBtn.remove();
+
+    const videoPlayerFrame = document.getElementById('VideoPlayerFrame');
+    if (videoPlayerFrame) videoPlayerFrame.remove();
+
+    const detailModal = document.getElementById('modal');
+    if (detailModal) detailModal.classList.add('hidden');
+
+    document.getElementById('resultsArea').classList.remove('hidden');
+    if (localStorage.getItem('doubanEnabled') === 'true') {
+      document.getElementById('doubanArea').classList.remove('hidden');
+    }
+
+    if (home) window.location.href = '/';
+  }
 </script>
 </body>
 </html>
