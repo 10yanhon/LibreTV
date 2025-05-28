@@ -446,22 +446,32 @@ window.addEventListener("message", (event) => {
 });
 </script>
 <script>
-// 横屏判断与父页面通知
-function isLandscape() {
-    return window.innerWidth > window.innerHeight;
+// 启动时通知 index.html 当前横竖屏状态
+function notifyOrientation() {
+  const landscape = window.innerWidth > window.innerHeight;
+  window.parent.postMessage({ type: "orientationChange", landscape }, "*");
 }
 
-function notifyParent() {
-    window.parent.postMessage({ type: 'orientationChange', landscape: isLandscape() }, '*');
-}
+// 初始 + 尺寸变化时发送横竖屏状态
+window.addEventListener("DOMContentLoaded", notifyOrientation);
+window.addEventListener("resize", () => setTimeout(notifyOrientation, 300));
 
-window.addEventListener('resize', notifyParent);
-window.addEventListener('orientationchange', notifyParent);
-window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(notifyParent, 300); // 页面加载后初次同步一次
-});
+// 接收来自 index.html 的“铺满请求”
 window.addEventListener("message", (event) => {
-  alert("Message received: " + JSON.stringify(event.data));
+  const data = event.data;
+  if (data && data.type === "expandFullscreen") {
+    alert("接收到 expandFullscreen");
+    const video = document.querySelector("video");
+    if (video) {
+      video.style.position = "fixed";
+      video.style.top = "0";
+      video.style.left = "0";
+      video.style.width = "100vw";
+      video.style.height = "100vh";
+      video.style.zIndex = "9999";
+      video.style.backgroundColor = "#000";
+    }
+  }
 });
 </script>
 </body>
