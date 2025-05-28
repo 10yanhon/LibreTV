@@ -441,7 +441,13 @@
 (function () {
   const BUTTON_ID = "fullScreenButton";
 
+  // 新的横屏判断方式，使用更稳定的 screen.orientation
   function isLandscape() {
+    const orientation = screen.orientation || screen.msOrientation || screen.mozOrientation;
+    if (orientation && orientation.type) {
+      return orientation.type.includes("landscape");
+    }
+    // fallback（兼容极少数浏览器）
     return window.innerWidth > window.innerHeight;
   }
 
@@ -497,14 +503,17 @@
     }
   }
 
-  // 监听 DOM 变化（iframe 创建/删除）及时调整按钮
+  // 监听播放器 DOM 变化
   const observer = new MutationObserver(updateButtonState);
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // 频繁检测横竖屏变化，保证跨设备稳定
-  setInterval(updateButtonState, 400);
+  // 监听屏幕方向变化
+  if (screen.orientation) {
+    screen.orientation.addEventListener("change", updateButtonState);
+  }
+  window.addEventListener("resize", updateButtonState);
 
-  // 页面初次加载时检测一次
+  // 初始检测
   window.addEventListener("DOMContentLoaded", updateButtonState);
 })();
 </script>
