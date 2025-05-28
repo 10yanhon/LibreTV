@@ -441,18 +441,19 @@
 (function () {
   const BUTTON_ID = "fullScreenButton";
 
-  // 新的横屏判断方式，使用更稳定的 screen.orientation
+  // 更精确的横屏判断（原始 + 备用）
   function isLandscape() {
     const orientation = screen.orientation || screen.msOrientation || screen.mozOrientation;
     if (orientation && orientation.type) {
       return orientation.type.includes("landscape");
     }
-    // fallback（兼容极少数浏览器）
+    // fallback（保底方案）
     return window.innerWidth > window.innerHeight;
   }
 
   function isPlayerActive() {
-    return !!document.getElementById("VideoPlayerFrame");
+    const iframe = document.getElementById("VideoPlayerFrame");
+    return iframe && iframe.offsetParent !== null;
   }
 
   function shouldShowFullScreenButton() {
@@ -465,6 +466,7 @@
     const btn = document.createElement("button");
     btn.id = BUTTON_ID;
     btn.textContent = "⛶ 拉满全屏";
+
     Object.assign(btn.style, {
       position: "fixed",
       bottom: "12px",
@@ -481,9 +483,14 @@
     });
 
     btn.onclick = () => {
-      const iframe = document.getElementById("VideoPlayerFrame");
-      if (iframe && isLandscape()) {
-        iframe.contentWindow.postMessage({ action: "toggleFullScreen" }, "*");
+      // 双重验证横屏 + 播放器存在才发指令
+      if (shouldShowFullScreenButton()) {
+        const iframe = document.getElementById("VideoPlayerFrame");
+        if (iframe) {
+          iframe.contentWindow.postMessage({ action: "toggleFullScreen" }, "*");
+        }
+      } else {
+        console.log("⛶ 按钮被点击时环境非法（竖屏或播放器不存在）");
       }
     };
 
@@ -503,17 +510,18 @@
     }
   }
 
-  // 监听播放器 DOM 变化
+  // 监听 DOM 变化（播放器出现/消失）
   const observer = new MutationObserver(updateButtonState);
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // 监听屏幕方向变化
-  if (screen.orientation) {
+  // 监听方向变化
+  if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener("change", updateButtonState);
   }
   window.addEventListener("resize", updateButtonState);
+  window.addEventListener("orientationchange", updateButtonState);
 
-  // 初始检测
+  // 初始执行一次
   window.addEventListener("DOMContentLoaded", updateButtonState);
 })();
 </script>
