@@ -438,57 +438,59 @@
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
 <script>
-// ✅ 判断是否为横屏状态
 function isLandscape() {
-  return window.innerWidth > window.innerHeight;
+  return window.matchMedia("(orientation: landscape)").matches;
 }
 
-// ✅ 创建“⛶ 拉满全屏”按钮（仅在横屏+iframe存在）
-function createFullFillButton() {
-  const iframe = document.getElementById('VideoPlayerFrame');
-  const exists = document.getElementById('FullFillButton');
-  if (!isLandscape() || !iframe || exists) return;
+// ✅ 延迟执行判断
+function delayedCheckAndCreateButton() {
+  setTimeout(() => {
+    const iframe = document.getElementById('VideoPlayerFrame');
+    const exists = document.getElementById('FullFillButton');
+    if (!iframe || exists) return;
 
-  const button = document.createElement('button');
-  button.id = 'FullFillButton';
-  button.textContent = '⛶';
-  button.style.position = 'fixed';
-  button.style.top = '12px';
-  button.style.right = '12px';
-  button.style.zIndex = '9999';
-  button.style.padding = '6px 10px';
-  button.style.fontSize = '18px';
-  button.style.border = 'none';
-  button.style.borderRadius = '4px';
-  button.style.background = 'rgba(0,0,0,0.6)';
-  button.style.color = '#fff';
-  button.style.cursor = 'pointer';
+    if (isLandscape()) {
+      const button = document.createElement('button');
+      button.id = 'FullFillButton';
+      button.textContent = '⛶';
+      button.style.position = 'fixed';
+      button.style.top = '12px';
+      button.style.right = '12px';
+      button.style.zIndex = '9999';
+      button.style.padding = '6px 10px';
+      button.style.fontSize = '18px';
+      button.style.border = 'none';
+      button.style.borderRadius = '4px';
+      button.style.background = 'rgba(0,0,0,0.6)';
+      button.style.color = '#fff';
+      button.style.cursor = 'pointer';
 
-  let expanded = false;
-  button.onclick = () => {
-    const frame = document.getElementById('VideoPlayerFrame');
-    if (frame) {
-      frame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
-      expanded = !expanded;
+      let expanded = false;
+      button.onclick = () => {
+        const frame = document.getElementById('VideoPlayerFrame');
+        if (frame) {
+          frame.contentWindow.postMessage(expanded ? 'shrink' : 'expand', '*');
+          expanded = !expanded;
+        }
+      };
+
+      document.body.appendChild(button);
     }
-  };
-
-  document.body.appendChild(button);
+  }, 500); // 延迟 500ms，确保设备旋转与 WebView 状态稳定
 }
 
-// ✅ 判断是否应该显示按钮（横屏 + iframe 存在）
+// ✅ 横屏状态切换时动态判断
 function showOrHideFullButton() {
   const iframe = document.getElementById('VideoPlayerFrame');
   const button = document.getElementById('FullFillButton');
 
-  if (isLandscape() && iframe) {
-    if (!button) createFullFillButton();
-  } else {
-    if (button) button.remove();
+  if (isLandscape() && iframe && !button) {
+    delayedCheckAndCreateButton();
+  } else if (!isLandscape() && button) {
+    button.remove();
   }
 }
 
-// ✅ 播放器打开函数
 function showVideoPlayer(url) {
   const detailModal = document.getElementById('modal');
   if (detailModal) detailModal.classList.add('hidden');
@@ -500,19 +502,16 @@ function showVideoPlayer(url) {
   videoPlayerFrame.className = 'fixed w-full h-screen z-40';
   videoPlayerFrame.src = url;
 
-  // 等 iframe 插入后再判断是否应插入按钮
   videoPlayerFrame.onload = () => {
-    showOrHideFullButton(); // 确保在 iframe 加载后判断横屏状态
+    delayedCheckAndCreateButton();
   };
 
   document.body.appendChild(videoPlayerFrame);
 
-  // 监听横竖屏变化
   window.addEventListener('resize', showOrHideFullButton);
   window.addEventListener('orientationchange', showOrHideFullButton);
 }
 
-// ✅ 播放器关闭函数
 function closeVideoPlayer(home = false) {
   const fullBtn = document.getElementById('FullFillButton');
   if (fullBtn) fullBtn.remove();
