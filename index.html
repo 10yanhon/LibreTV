@@ -442,12 +442,12 @@ function isLandscape() {
   return window.innerWidth > window.innerHeight;
 }
 
-// ✅ 最终创建按钮函数（仅横屏）
-function createFullFillButton() {
-  // 避免重复创建
-  if (document.getElementById('FullFillButton')) return;
+// ✅ 真正的按钮注入函数
+function injectFullFillButton() {
+  if (!isLandscape()) return; // 竖屏禁止插入
 
-  if (!isLandscape()) return; // 确保确实是横屏
+  // 避免重复添加
+  if (document.getElementById('FullFillButton')) return;
 
   const button = document.createElement('button');
   button.id = 'FullFillButton';
@@ -476,17 +476,21 @@ function createFullFillButton() {
   document.body.appendChild(button);
 }
 
-// ✅ 封装稳定延迟创建逻辑
-function tryInjectButtonWithDelay(retry = 3) {
-  if (!isLandscape()) return;
-
+// ✅ 延迟检测方向 + 多重验证
+function tryInsertButtonSafely() {
   setTimeout(() => {
-    if (isLandscape()) {
-      createFullFillButton();
-    } else if (retry > 0) {
-      tryInjectButtonWithDelay(retry - 1); // 最多尝试 3 次
+    const frame = document.getElementById('VideoPlayerFrame');
+    const btn = document.getElementById('FullFillButton');
+
+    if (frame && isLandscape()) {
+      injectFullFillButton();
     }
-  }, 500);
+
+    // 如果是竖屏但按钮已误插，则强制移除
+    if (!isLandscape() && btn) {
+      btn.remove();
+    }
+  }, 1000); // 1 秒延迟确保方向稳定
 }
 
 // ✅ 播放器打开
@@ -500,24 +504,15 @@ function showVideoPlayer(url) {
   videoPlayerFrame.id = 'VideoPlayerFrame';
   videoPlayerFrame.className = 'fixed w-full h-screen z-40';
   videoPlayerFrame.src = url;
-
-  videoPlayerFrame.onload = () => {
-    tryInjectButtonWithDelay(); // 只有 iframe 加载完成后才开始判断
-  };
-
   document.body.appendChild(videoPlayerFrame);
 
-  window.addEventListener('orientationchange', () => {
-    const btn = document.getElementById('FullFillButton');
-    if (!isLandscape() && btn) btn.remove();
-    else if (isLandscape() && !btn) tryInjectButtonWithDelay();
-  });
+  // 1 秒后再判断是否插入按钮
+  tryInsertButtonSafely();
 
-  window.addEventListener('resize', () => {
-    const btn = document.getElementById('FullFillButton');
-    if (!isLandscape() && btn) btn.remove();
-    else if (isLandscape() && !btn) tryInjectButtonWithDelay();
-  });
+  window.addEventListener('orientationchange', tryInsertButtonSafely);
+  window.addEventListener('resize', tryInsertButtonSafely);
+
+  videoPlayerFrame.focus();
 }
 
 // ✅ 播放器关闭
