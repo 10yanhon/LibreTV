@@ -381,12 +381,12 @@ function isLandscape() {
     return window.innerWidth > window.innerHeight;
 }
 
-// 检查横屏 + iframe 存在 + 未已有按钮，再创建
-function handleOrientationAndButton() {
-    const iframe = document.getElementById("VideoPlayerFrame");
+// 尝试创建按钮（仅限横屏）
+function createFullscreenButtonIfLandscape() {
     const existingBtn = document.getElementById("fullscreenBtn");
+    const video = document.querySelector("video");
 
-    if (isLandscape() && iframe && !existingBtn) {
+    if (isLandscape() && video && !existingBtn) {
         const btn = document.createElement("button");
         btn.id = "fullscreenBtn";
         btn.textContent = "⛶";
@@ -408,26 +408,36 @@ function handleOrientationAndButton() {
         });
 
         btn.addEventListener("click", () => {
-    alert("按钮已点击");
-    iframe.contentWindow.postMessage({ type: "expandFullscreen" }, "*");
-});
+            alert("按钮已点击");
+            const video = document.querySelector("video");
+            if (video) {
+                video.style.position = "fixed";
+                video.style.top = "0";
+                video.style.left = "0";
+                video.style.width = "100vw";
+                video.style.height = "100vh";
+                video.style.zIndex = "9999";
+                video.style.backgroundColor = "#000";
+            }
+        });
+
         document.body.appendChild(btn);
     }
 
-    // 如果不是横屏但按钮存在，说明状态不符，移除按钮
+    // 如果变回竖屏，移除按钮
     if (!isLandscape() && existingBtn) {
         existingBtn.remove();
     }
 }
 
-// 初始判断
+// 页面加载后尝试创建按钮
 window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(handleOrientationAndButton, 300);
+    setTimeout(createFullscreenButtonIfLandscape, 300);
 });
-// 旋转时判断
+// 横竖屏变化时重新判断
 window.addEventListener("resize", () => {
-    setTimeout(handleOrientationAndButton, 300);
+    setTimeout(createFullscreenButtonIfLandscape, 300);
 });
- </script>
+</script>
 </body>
 </html>
