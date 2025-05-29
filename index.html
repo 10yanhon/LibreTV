@@ -492,66 +492,12 @@ window.addEventListener("resize", () => {
 });
 </script>
 <script>
-// 判断是否横屏
-function isLandscape() {
-  return window.innerWidth > window.innerHeight;
-}
-
-// 接收 player.html 发来的横屏通知
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (data && data.type === "orientationChange") {
-    console.log("接收到横屏状态：", data.landscape);
-
-    if (data.landscape) {
-      createFullscreenButton();
-    } else {
-      removeFullscreenButton();
+// 接收来自 player.html 的横屏通知，并调用创建按钮逻辑
+window.addEventListener("message", function (event) {
+    if (event.data && event.data.type === "orientationChange") {
+        handleOrientationAndButton(); // 唯一调用，交由终极版内部判断横屏并决定是否创建/移除按钮
     }
-  }
 });
-
-// 创建按钮并发送铺满请求
-function createFullscreenButton() {
-  const iframe = document.getElementById("VideoPlayerFrame");
-  if (!iframe) return;
-
-  if (document.getElementById("fullscreenBtn")) return;
-
-  const btn = document.createElement("button");
-  btn.id = "fullscreenBtn";
-  btn.textContent = "⛶";
-  btn.title = "拉满全屏";
-
-  Object.assign(btn.style, {
-    position: "fixed",
-    top: "10px",
-    right: "50%",
-    transform: "translateX(50%)",
-    zIndex: "9999",
-    background: "#222",
-    color: "#fff",
-    border: "1px solid #444",
-    borderRadius: "6px",
-    padding: "6px 10px",
-    fontSize: "16px",
-    cursor: "pointer",
-    opacity: "0.85"
-  });
-
-  btn.addEventListener("click", () => {
-    alert("按钮已点击");
-    iframe.contentWindow.postMessage({ type: "expandFullscreen" }, "*");
-  });
-
-  document.body.appendChild(btn);
-}
-
-// 移除按钮
-function removeFullscreenButton() {
-  const existingBtn = document.getElementById("fullscreenBtn");
-  if (existingBtn) existingBtn.remove();
-}
 </script>
 </body>
 </html>
