@@ -310,7 +310,7 @@
                     <div class="mt-2 flex justify-center md:justify-end space-x-4">
                         <a href="about.html" class="text-gray-400 hover:text-white text-sm transition-colors">关于我们</a>
                         <a href="privacy.html" class="text-gray-400 hover:text-white text-sm transition-colors">隐私政策</a>
-                        <a href="https://www.unicef.org/zh" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">捐赠</a>
+                        <a href="https://www.msf.hk/zh-hant/donate/general?type=one-off" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">捐赠</a>
                     </div>
                 </div>
             </div>
@@ -421,9 +421,7 @@
     <script src="js/pwa-register.js"></script>
 
     <!-- 环境变量注入脚本 -->
-    
     <script>
-    
         // 创建全局环境变量对象
         window.__ENV__ = window.__ENV__ || {};
         
@@ -437,67 +435,5 @@
 
     <!-- 添加弹窗和URL搜索参数处理脚本 -->
     <script src="js/index-page.js"></script>
-<script>
-// 更稳妥判断是否横屏（宽 > 高）
-function isLandscape() {
-    return window.innerWidth > window.innerHeight;
-}
-
-// 检查横屏 + iframe 存在 + 未已有按钮，再创建
-function handleOrientationAndButton() {
-    const iframe = document.getElementById("VideoPlayerFrame");
-    const existingBtn = document.getElementById("fullscreenBtn");
-
-    if (isLandscape() && iframe && !existingBtn) {
-        const btn = document.createElement("button");
-        btn.id = "fullscreenBtn";
-        btn.textContent = "⛶";
-        btn.title = "拉满全屏";
-        Object.assign(btn.style, {
-            position: "fixed",
-            top: "10px",
-            right: "50%",
-            transform: "translateX(50%)",
-            zIndex: "9999",
-            background: "#222",
-            color: "#fff",
-            border: "1px solid #444",
-            borderRadius: "6px",
-            padding: "6px 10px",
-            fontSize: "16px",
-            cursor: "pointer",
-            opacity: "0.85"
-        });
-
-        btn.addEventListener("click", () => {
-    alert("按钮已点击");
-    iframe.contentWindow.postMessage({ type: "expandFullscreen" }, "*");
-});
-        document.body.appendChild(btn);
-    }
-
-    // 如果不是横屏但按钮存在，说明状态不符，移除按钮
-    if (!isLandscape() && existingBtn) {
-        existingBtn.remove();
-    }
-}
-
-// 初始判断
-window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(handleOrientationAndButton, 300);
-});
-// 旋转时判断
-window.addEventListener("resize", () => {
-    setTimeout(handleOrientationAndButton, 300);
-});
-</script>
-<script>
-// 接收来自 player.html 的横屏通知，并调用创建按钮逻辑
-window.addEventListener("message", function (event) {
-    if (event.data && event.data.type === "orientationChange") {
-        handleOrientationAndButton(); // 唯一调用，交由终极版内部判断横屏并决定是否创建/移除按钮
-    }
-});
-</script>
 </body>
 </html>
