@@ -376,53 +376,46 @@
         });
     </script>
     <script>
-  document.addEventListener('fullscreenchange', () => {
-    const isFullscreen = !!document.fullscreenElement;
-    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+  // 等待进入 fullscreen 横屏后再创建按钮
+  document.addEventListener('fullscreenchange', function () {
+    const isFullscreen = document.fullscreenElement != null;
+    const isLandscape = window.innerWidth > window.innerHeight;
+
+    const existing = document.getElementById('fullscreenControlPanel');
+    if (existing) existing.remove(); // 先移除旧按钮，避免重复
 
     if (isFullscreen && isLandscape) {
-      // 创建按钮（仅第一次进入横屏 fullscreen 时）
-      if (!document.getElementById('fullscreenControlPanel')) {
-        const panel = document.createElement('div');
-        panel.id = 'fullscreenControlPanel';
-        panel.style.cssText = `
-          position: fixed;
-          top: 10px;
-          right: 10px;
-          z-index: 9999;
-        `;
+      const panel = document.createElement('div');
+      panel.id = 'fullscreenControlPanel';
+      panel.style.position = 'fixed';
+      panel.style.top = '10px';
+      panel.style.right = '10px';
+      panel.style.zIndex = '9999';
 
-        const button = document.createElement('button');
-        button.textContent = '⛶';
-        button.style.cssText = `
-          background: #222;
-          color: #fff;
-          border: 1px solid #444;
-          border-radius: 6px;
-          padding: 6px 10px;
-          font-size: 16px;
-          cursor: pointer;
-          opacity: 0.85;
-        `;
+      const button = document.createElement('button');
+      button.textContent = '⛶';
+      button.style.background = '#222';
+      button.style.color = '#fff';
+      button.style.border = '1px solid #444';
+      button.style.borderRadius = '6px';
+      button.style.padding = '6px 10px';
+      button.style.fontSize = '16px';
+      button.style.cursor = 'pointer';
+      button.style.opacity = '0.85';
 
-        button.addEventListener('click', () => {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-          } else {
-            document.exitFullscreen();
-          }
-        });
+      button.addEventListener('click', () => {
+        if (!document.fullscreenElement) return;
+        const videoContainer = document.fullscreenElement;
+        if (videoContainer.requestFullscreen) {
+          videoContainer.requestFullscreen();
+        }
+        if (videoContainer.webkitRequestFullscreen) {
+          videoContainer.webkitRequestFullscreen();
+        }
+      });
 
-        panel.appendChild(button);
-        document.body.appendChild(panel);
-      } else {
-        // 已创建按钮，则显示
-        document.getElementById('fullscreenControlPanel').style.display = 'block';
-      }
-    } else {
-      // 退出横屏 fullscreen 时隐藏按钮
-      const panel = document.getElementById('fullscreenControlPanel');
-      if (panel) panel.style.display = 'none';
+      panel.appendChild(button);
+      document.body.appendChild(panel);
     }
   });
 </script>
