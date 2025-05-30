@@ -1,11 +1,10 @@
 (function () {
   let btn = null;
 
-  // 判断是否是“点击原放大按钮后”的 fullscreen 横屏状态
-  function isManualFullscreenLandscape() {
+  function isValidFullscreenLandscape() {
     return (
-      document.fullscreenElement && 
-      screen.orientation?.type?.startsWith("landscape")
+      document.fullscreenElement &&
+      window.innerWidth > window.innerHeight
     );
   }
 
@@ -15,6 +14,8 @@
     btn = document.createElement("button");
     btn.id = "fullscreenBtn";
     btn.textContent = "⛶";
+    btn.title = "铺满全屏";
+
     Object.assign(btn.style, {
       position: "fixed",
       top: "10px",
@@ -32,7 +33,7 @@
 
     btn.addEventListener("click", () => {
       alert("点击了铺满全屏按钮");
-      // 在这里执行你自己的铺满全屏逻辑
+      // 在此加入你的扩展全屏代码
     });
 
     document.body.appendChild(btn);
@@ -45,14 +46,25 @@
     }
   }
 
-  function handleFullscreenChange() {
-    if (isManualFullscreenLandscape()) {
+  function checkAndToggleButton() {
+    if (isValidFullscreenLandscape()) {
       createButton();
     } else {
       removeButton();
     }
   }
 
-  document.addEventListener("fullscreenchange", handleFullscreenChange);
-  window.addEventListener("DOMContentLoaded", removeButton); // 页面加载先清理
+  document.addEventListener("fullscreenchange", () => {
+    // 延迟 100ms，确保 fullscreen 状态稳定
+    setTimeout(checkAndToggleButton, 100);
+  });
+
+  window.addEventListener("resize", () => {
+    // 当屏幕宽高变化（可能是用户退出横屏）时重新判断
+    setTimeout(checkAndToggleButton, 100);
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    removeButton(); // 页面加载时清除残留
+  });
 })();
