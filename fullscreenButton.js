@@ -1,25 +1,26 @@
 (function () {
-  let btn = null;
+  let button = null;
 
-  function isValidFullscreenLandscape() {
-    return (
-      document.fullscreenElement &&
-      window.innerWidth > window.innerHeight
-    );
+  function isLandscape() {
+    return window.innerWidth > window.innerHeight;
+  }
+
+  function isInFullscreen() {
+    return !!document.fullscreenElement;
   }
 
   function createButton() {
-    if (btn) return; // 避免重复创建
+    if (button || !isInFullscreen() || !isLandscape()) return;
 
-    btn = document.createElement("button");
-    btn.id = "fullscreenBtn";
-    btn.textContent = "⛶";
-    btn.title = "铺满全屏";
-
-    Object.assign(btn.style, {
+    button = document.createElement("button");
+    button.id = "fullscreenBtn";
+    button.textContent = "⛶";
+    button.title = "铺满全屏";
+    Object.assign(button.style, {
       position: "fixed",
       top: "10px",
-      right: "10px",
+      right: "50%",
+      transform: "translateX(50%)",
       zIndex: "9999",
       background: "#222",
       color: "#fff",
@@ -31,40 +32,42 @@
       opacity: "0.85"
     });
 
-    btn.addEventListener("click", () => {
-      alert("点击了铺满全屏按钮");
-      // 在此加入你的扩展全屏代码
-    });
+    button.onclick = () => {
+      alert("按钮已点击");
+      // 发送消息给父页面或做全屏逻辑
+      window.parent.postMessage({ type: "expandFullscreen" }, "*");
+    };
 
-    document.body.appendChild(btn);
+    document.body.appendChild(button);
   }
 
   function removeButton() {
-    if (btn) {
-      btn.remove();
-      btn = null;
+    if (button) {
+      button.remove();
+      button = null;
     }
   }
 
-  function checkAndToggleButton() {
-    if (isValidFullscreenLandscape()) {
+  function checkState() {
+    if (isInFullscreen() && isLandscape()) {
       createButton();
     } else {
       removeButton();
     }
   }
 
+  // 监听 fullscreen 进入/退出
   document.addEventListener("fullscreenchange", () => {
-    // 延迟 100ms，确保 fullscreen 状态稳定
-    setTimeout(checkAndToggleButton, 100);
+    setTimeout(checkState, 300);
   });
 
+  // 监听窗口 resize（用户旋转手机或手动退出）
   window.addEventListener("resize", () => {
-    // 当屏幕宽高变化（可能是用户退出横屏）时重新判断
-    setTimeout(checkAndToggleButton, 100);
+    setTimeout(checkState, 300);
   });
 
-  window.addEventListener("DOMContentLoaded", () => {
-    removeButton(); // 页面加载时清除残留
+  // 初始尝试（有些浏览器可能直接在 fullscreen 打开页面）
+  window.addEventListener("load", () => {
+    setTimeout(checkState, 300);
   });
 })();
