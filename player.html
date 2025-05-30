@@ -375,61 +375,6 @@
             });
         });
     </script>
-<!-- player.html 中的脚本部分 -->
-<script>
-document.addEventListener("fullscreenchange", () => {
-    const isFullscreen = !!document.fullscreenElement;
-    const isLandscape = window.innerWidth > window.innerHeight;
-
-    if (isFullscreen && isLandscape) {
-        showCustomPanel(); // 进入横屏全屏，加载新副控按钮
-    } else {
-        removeCustomPanel(); // 退出横屏，清理副控按钮
-    }
-});
-
-function showCustomPanel() {
-    if (document.getElementById("customFullscreenBtn")) return;
-
-    const btn = document.createElement("button");
-    btn.id = "customFullscreenBtn";
-    btn.textContent = "铺满";
-    Object.assign(btn.style, {
-        position: "fixed",
-        top: "12px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: "10000",
-        background: "#222",
-        color: "#fff",
-        border: "1px solid #444",
-        borderRadius: "6px",
-        padding: "6px 10px",
-        fontSize: "16px",
-        cursor: "pointer",
-        opacity: "0.9"
-    });
-
-    btn.onclick = () => {
-        const video = document.querySelector("video");
-        if (video) {
-            video.style.position = "fixed";
-            video.style.top = "0";
-            video.style.left = "0";
-            video.style.width = "100vw";
-            video.style.height = "100vh";
-            video.style.zIndex = "9999";
-            video.style.backgroundColor = "#000";
-        }
-    };
-
-    document.body.appendChild(btn);
-}
-
-function removeCustomPanel() {
-    const btn = document.getElementById("customFullscreenBtn");
-    if (btn) btn.remove();
-}
-</script>
+<script src="fullscreenButton.js"></script>
 </body>
 </html>
