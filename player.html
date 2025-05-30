@@ -375,5 +375,56 @@
             });
         });
     </script>
+    <script>
+  document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = !!document.fullscreenElement;
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+
+    if (isFullscreen && isLandscape) {
+      // 创建按钮（仅第一次进入横屏 fullscreen 时）
+      if (!document.getElementById('fullscreenControlPanel')) {
+        const panel = document.createElement('div');
+        panel.id = 'fullscreenControlPanel';
+        panel.style.cssText = `
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          z-index: 9999;
+        `;
+
+        const button = document.createElement('button');
+        button.textContent = '⛶';
+        button.style.cssText = `
+          background: #222;
+          color: #fff;
+          border: 1px solid #444;
+          border-radius: 6px;
+          padding: 6px 10px;
+          font-size: 16px;
+          cursor: pointer;
+          opacity: 0.85;
+        `;
+
+        button.addEventListener('click', () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          } else {
+            document.exitFullscreen();
+          }
+        });
+
+        panel.appendChild(button);
+        document.body.appendChild(panel);
+      } else {
+        // 已创建按钮，则显示
+        document.getElementById('fullscreenControlPanel').style.display = 'block';
+      }
+    } else {
+      // 退出横屏 fullscreen 时隐藏按钮
+      const panel = document.getElementById('fullscreenControlPanel');
+      if (panel) panel.style.display = 'none';
+    }
+  });
+</script>
 </body>
 </html>
