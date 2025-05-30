@@ -1,9 +1,11 @@
 (function () {
-  const createButton = () => {
-    // 避免重复插入
-    if (document.getElementById('fullscreenBtn')) return;
+  let panel = null;
 
-    const panel = document.createElement('div');
+  const createButton = () => {
+    // 如果已经创建，跳过
+    if (panel) return;
+
+    panel = document.createElement('div');
     panel.id = 'fullscreenControlPanel';
     panel.style.cssText = `
       display: none;
@@ -27,7 +29,6 @@
       opacity: 0.85;
     `;
 
-    // 点击按钮切换网页全屏
     button.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -40,30 +41,21 @@
     document.body.appendChild(panel);
   };
 
-  const updateButtonVisibility = () => {
+  const handleFullscreenChange = () => {
     const isFullscreen = !!document.fullscreenElement;
     const isLandscape = window.matchMedia("(orientation: landscape)").matches;
 
-    const panel = document.getElementById('fullscreenControlPanel');
-    if (!panel) return;
-
     if (isFullscreen && isLandscape) {
+      if (!panel) createButton(); // ⚠️ 只在进入全屏横屏时才创建
       panel.style.display = 'block';
     } else {
-      panel.style.display = 'none';
+      if (panel) panel.style.display = 'none';
     }
   };
 
-  // 初始化
-  document.addEventListener('DOMContentLoaded', () => {
-    createButton();
-    updateButtonVisibility();
-  });
-
-  // 监听全屏变化
-  document.addEventListener('fullscreenchange', updateButtonVisibility);
-  // 监听横竖屏变化
+  // 监听仅全屏状态变化（不在 DOMContentLoaded 中执行）
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
   window.addEventListener('orientationchange', () => {
-    setTimeout(updateButtonVisibility, 300);
+    setTimeout(handleFullscreenChange, 300);
   });
 })();
