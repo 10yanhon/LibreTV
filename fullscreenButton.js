@@ -1,33 +1,22 @@
-document.addEventListener("DOMContentLoaded", () => {
-  let buttonInserted = false;
+(function () {
+  const createButton = () => {
+    // 避免重复插入
+    if (document.getElementById('fullscreenBtn')) return;
 
-  function isLandscapeFullscreen() {
-    return (
-      document.fullscreenElement &&
-      screen.orientation &&
-      screen.orientation.type.startsWith("landscape")
-    );
-  }
-
-  function createFullscreenButton() {
-    if (buttonInserted) return;
-
-    const panel = document.createElement("div");
-    panel.id = "fullscreenControlPanel";
-    panel.style = `
+    const panel = document.createElement('div');
+    panel.id = 'fullscreenControlPanel';
+    panel.style.cssText = `
+      display: none;
       position: fixed;
       top: 10px;
       right: 10px;
       z-index: 9999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
     `;
 
-    const btn = document.createElement("button");
-    btn.id = "fullscreenBtn";
-    btn.textContent = "⛶";
-    btn.style = `
+    const button = document.createElement('button');
+    button.id = 'fullscreenBtn';
+    button.textContent = '⛶';
+    button.style.cssText = `
       background: #222;
       color: #fff;
       border: 1px solid #444;
@@ -38,30 +27,43 @@ document.addEventListener("DOMContentLoaded", () => {
       opacity: 0.85;
     `;
 
-    btn.addEventListener("click", () => {
-      if (!document.fullscreenElement) return;
-      const iframe = document.fullscreenElement.querySelector("video") || document.fullscreenElement;
-      if (iframe.requestFullscreen) {
-        iframe.requestFullscreen();
+    // 点击按钮切换网页全屏
+    button.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
       }
     });
 
-    panel.appendChild(btn);
+    panel.appendChild(button);
     document.body.appendChild(panel);
-    buttonInserted = true;
-  }
+  };
 
-  function removeFullscreenButton() {
-    const panel = document.getElementById("fullscreenControlPanel");
-    if (panel) panel.remove();
-    buttonInserted = false;
-  }
+  const updateButtonVisibility = () => {
+    const isFullscreen = !!document.fullscreenElement;
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
 
-  document.addEventListener("fullscreenchange", () => {
-    if (isLandscapeFullscreen()) {
-      createFullscreenButton();
+    const panel = document.getElementById('fullscreenControlPanel');
+    if (!panel) return;
+
+    if (isFullscreen && isLandscape) {
+      panel.style.display = 'block';
     } else {
-      removeFullscreenButton();
+      panel.style.display = 'none';
     }
+  };
+
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    createButton();
+    updateButtonVisibility();
   });
-});
+
+  // 监听全屏变化
+  document.addEventListener('fullscreenchange', updateButtonVisibility);
+  // 监听横竖屏变化
+  window.addEventListener('orientationchange', () => {
+    setTimeout(updateButtonVisibility, 300);
+  });
+})();
