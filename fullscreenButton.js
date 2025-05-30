@@ -1,76 +1,70 @@
 (function () {
-  let panel, button;
+  // 创建按钮容器，初始隐藏
+  const panel = document.createElement("div");
+  panel.id = "fullscreenControlPanel";
+  panel.style.cssText = `
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+  `;
 
-  // 检查是否处于伪全屏横屏（点击原放大按钮 + 自动旋转关闭）
-  function isPseudoFullscreenLandscape() {
-    return (
-      screen.orientation?.type?.startsWith("landscape") &&
-      !window.matchMedia("(orientation: portrait)").matches &&
-      !document.fullscreenElement &&
-      window.innerWidth > window.innerHeight
-    );
+  const btn = document.createElement("button");
+  btn.id = "fullscreenBtn";
+  btn.textContent = "⛶";
+  btn.title = "铺满全屏";
+  btn.style.cssText = `
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.85;
+  `;
+
+  btn.addEventListener("click", () => {
+    alert("已点击铺满全屏按钮");
+    // 这里可添加你控制播放器铺满逻辑
+  });
+
+  panel.appendChild(btn);
+  document.body.appendChild(panel);
+
+  // 判断是否是“手动进入 fullscreen 的横屏”
+  function shouldShowButton() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const inFullscreen =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement;
+
+    return isLandscape && inFullscreen;
   }
 
-  // 创建控制面板（只创建一次）
-  function createFullscreenButton() {
-    if (document.getElementById("fullscreenControlPanel")) return;
-
-    panel = document.createElement("div");
-    panel.id = "fullscreenControlPanel";
-    Object.assign(panel.style, {
-      display: "none",
-      position: "fixed",
-      top: "10px",
-      right: "10px",
-      zIndex: "9999"
-    });
-
-    button = document.createElement("button");
-    button.id = "fullscreenBtn";
-    button.innerText = "⛶";
-    button.title = "铺满全屏";
-    Object.assign(button.style, {
-      background: "#222",
-      color: "#fff",
-      border: "1px solid #444",
-      borderRadius: "6px",
-      padding: "6px 10px",
-      fontSize: "16px",
-      cursor: "pointer",
-      opacity: "0.85"
-    });
-
-    button.addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(console.error);
-      } else {
-        document.exitFullscreen().catch(console.error);
-      }
-    });
-
-    panel.appendChild(button);
-    document.body.appendChild(panel);
-  }
-
-  // 控制显示或隐藏按钮
   function updateButtonVisibility() {
-    const panel = document.getElementById("fullscreenControlPanel");
-    if (!panel) return;
-
-    if (isPseudoFullscreenLandscape()) {
+    if (shouldShowButton()) {
       panel.style.display = "block";
     } else {
       panel.style.display = "none";
     }
   }
 
-  // 初始化
-  window.addEventListener("DOMContentLoaded", () => {
-    createFullscreenButton();
-    updateButtonVisibility();
+  // 监听 fullscreen 状态变化
+  ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach(evt =>
+    document.addEventListener(evt, updateButtonVisibility)
+  );
+
+  // 监听窗口大小变化（防止旋转后不更新）
+  window.addEventListener("resize", () => {
+    setTimeout(updateButtonVisibility, 300);
   });
 
-  // 响应方向变化 / 尺寸变化
-  window.addEventListener("resize", updateButtonVisibility);
-  screen.orientation?.addEventListener("change", updateButtonVisibility);
+  // 初始判断一次
+  window.addEventListener("DOMContentLoaded", () => {
+    setTimeout(updateButtonVisibility, 300);
+  });
 })();
