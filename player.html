@@ -375,69 +375,61 @@
             });
         });
     </script>
-    <script>
-// 更稳妥判断是否横屏（宽 > 高）
-function isLandscape() {
-    return window.innerWidth > window.innerHeight;
+<!-- player.html 中的脚本部分 -->
+<script>
+document.addEventListener("fullscreenchange", () => {
+    const isFullscreen = !!document.fullscreenElement;
+    const isLandscape = window.innerWidth > window.innerHeight;
+
+    if (isFullscreen && isLandscape) {
+        showCustomPanel(); // 进入横屏全屏，加载新副控按钮
+    } else {
+        removeCustomPanel(); // 退出横屏，清理副控按钮
+    }
+});
+
+function showCustomPanel() {
+    if (document.getElementById("customFullscreenBtn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "customFullscreenBtn";
+    btn.textContent = "铺满";
+    Object.assign(btn.style, {
+        position: "fixed",
+        top: "12px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: "10000",
+        background: "#222",
+        color: "#fff",
+        border: "1px solid #444",
+        borderRadius: "6px",
+        padding: "6px 10px",
+        fontSize: "16px",
+        cursor: "pointer",
+        opacity: "0.9"
+    });
+
+    btn.onclick = () => {
+        const video = document.querySelector("video");
+        if (video) {
+            video.style.position = "fixed";
+            video.style.top = "0";
+            video.style.left = "0";
+            video.style.width = "100vw";
+            video.style.height = "100vh";
+            video.style.zIndex = "9999";
+            video.style.backgroundColor = "#000";
+        }
+    };
+
+    document.body.appendChild(btn);
 }
 
-// 尝试创建按钮（仅限横屏）
-function createFullscreenButtonIfLandscape() {
-    const existingBtn = document.getElementById("fullscreenBtn");
-    const video = document.querySelector("video");
-
-    if (isLandscape() && video && !existingBtn) {
-        const btn = document.createElement("button");
-        btn.id = "fullscreenBtn";
-        btn.textContent = "⛶";
-        btn.title = "拉满全屏";
-        Object.assign(btn.style, {
-            position: "fixed",
-            top: "10px",
-            right: "50%",
-            transform: "translateX(50%)",
-            zIndex: "9999",
-            background: "#222",
-            color: "#fff",
-            border: "1px solid #444",
-            borderRadius: "6px",
-            padding: "6px 10px",
-            fontSize: "16px",
-            cursor: "pointer",
-            opacity: "0.85"
-        });
-
-        btn.addEventListener("click", () => {
-            alert("按钮已点击");
-            const video = document.querySelector("video");
-            if (video) {
-                video.style.position = "fixed";
-                video.style.top = "0";
-                video.style.left = "0";
-                video.style.width = "100vw";
-                video.style.height = "100vh";
-                video.style.zIndex = "9999";
-                video.style.backgroundColor = "#000";
-            }
-        });
-
-        document.body.appendChild(btn);
-    }
-
-    // 如果变回竖屏，移除按钮
-    if (!isLandscape() && existingBtn) {
-        existingBtn.remove();
-    }
+function removeCustomPanel() {
+    const btn = document.getElementById("customFullscreenBtn");
+    if (btn) btn.remove();
 }
-
-// 页面加载后尝试创建按钮
-window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(createFullscreenButtonIfLandscape, 300);
-});
-// 横竖屏变化时重新判断
-window.addEventListener("resize", () => {
-    setTimeout(createFullscreenButtonIfLandscape, 300);
-});
 </script>
 </body>
 </html>
