@@ -375,49 +375,5 @@
             });
         });
     </script>
-    <script>
-  // 等待进入 fullscreen 横屏后再创建按钮
-  document.addEventListener('fullscreenchange', function () {
-    const isFullscreen = document.fullscreenElement != null;
-    const isLandscape = window.innerWidth > window.innerHeight;
-
-    const existing = document.getElementById('fullscreenControlPanel');
-    if (existing) existing.remove(); // 先移除旧按钮，避免重复
-
-    if (isFullscreen && isLandscape) {
-      const panel = document.createElement('div');
-      panel.id = 'fullscreenControlPanel';
-      panel.style.position = 'fixed';
-      panel.style.top = '10px';
-      panel.style.right = '10px';
-      panel.style.zIndex = '9999';
-
-      const button = document.createElement('button');
-      button.textContent = '⛶';
-      button.style.background = '#222';
-      button.style.color = '#fff';
-      button.style.border = '1px solid #444';
-      button.style.borderRadius = '6px';
-      button.style.padding = '6px 10px';
-      button.style.fontSize = '16px';
-      button.style.cursor = 'pointer';
-      button.style.opacity = '0.85';
-
-      button.addEventListener('click', () => {
-        if (!document.fullscreenElement) return;
-        const videoContainer = document.fullscreenElement;
-        if (videoContainer.requestFullscreen) {
-          videoContainer.requestFullscreen();
-        }
-        if (videoContainer.webkitRequestFullscreen) {
-          videoContainer.webkitRequestFullscreen();
-        }
-      });
-
-      panel.appendChild(button);
-      document.body.appendChild(panel);
-    }
-  });
-</script>
 </body>
 </html>
