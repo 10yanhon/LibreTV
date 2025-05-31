@@ -1,16 +1,11 @@
 (function () {
-  let lastWidth = 0;
-  let lastHeight = 0;
-  let button = null;
-  let isInserted = false;
+  let hasInserted = false;
+  let checkInterval = null;
 
-  const CHECK_INTERVAL = 300; // 毫秒
-  const TARGET_ASPECT_RATIO = 1.2; // 横屏时宽高比 > 1.2
+  function createButton(targetElement) {
+    if (document.getElementById('fill-toggle-button')) return;
 
-  function insertButton(targetElement) {
-    if (button) return;
-
-    button = document.createElement('button');
+    const button = document.createElement('button');
     button.id = 'fill-toggle-button';
     button.textContent = '铺满全屏';
     button.dataset.active = '0';
@@ -48,42 +43,37 @@
     });
 
     document.body.appendChild(button);
-    isInserted = true;
+    hasInserted = true;
   }
 
   function removeButton() {
-    if (button) {
-      button.remove();
-      button = null;
-      isInserted = false;
+    const btn = document.getElementById('fill-toggle-button');
+    if (btn) btn.remove();
+    hasInserted = false;
+  }
+
+  function monitorFullscreen() {
+    const fullscreenEl = document.fullscreenElement;
+    if (!fullscreenEl) return;
+
+    const w = fullscreenEl.offsetWidth;
+    const h = fullscreenEl.offsetHeight;
+
+    const isLikelyLandscape = w > h && (w / h > 1.3);
+
+    if (isLikelyLandscape && !hasInserted) {
+      createButton(fullscreenEl);
     }
   }
 
-  function startMonitor() {
-    const video = document.querySelector('video');
-
-    if (!video) return;
-
-    setInterval(() => {
-      const isFullscreen = !!document.fullscreenElement;
-      const w = video.clientWidth;
-      const h = video.clientHeight;
-
-      const aspect = w / h;
-      const significantChange = Math.abs(w - lastWidth) > 100 || Math.abs(h - lastHeight) > 100;
-
-      lastWidth = w;
-      lastHeight = h;
-
-      if (isFullscreen && aspect > TARGET_ASPECT_RATIO && significantChange && !isInserted) {
-        insertButton(document.fullscreenElement || video);
-      }
-
-      if ((!isFullscreen || aspect <= TARGET_ASPECT_RATIO) && isInserted) {
-        removeButton();
-      }
-    }, CHECK_INTERVAL);
-  }
-
-  document.addEventListener('DOMContentLoaded', startMonitor);
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      // 启动定时检测（仅 fullscreen 状态）
+      checkInterval = setInterval(monitorFullscreen, 300);
+    } else {
+      // 离开 fullscreen，清除按钮
+      clearInterval(checkInterval);
+      removeButton();
+    }
+  });
 })();
