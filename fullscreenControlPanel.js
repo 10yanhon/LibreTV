@@ -1,80 +1,64 @@
 (() => {
   const BUTTON_ID = 'fullscreen-pillar-button';
-  let isPillarMode = false; // 是否铺满模式开启
+  let isPillarMode = false;
   let button = null;
   let fullscreenElement = null;
 
-  // 判断当前屏幕是否横屏（宽 > 高）
   function isLandscape() {
     return window.innerWidth > window.innerHeight;
   }
 
-  // 创建铺满全屏按钮
   function createButton() {
-    if (button) return;
+    if (button || !fullscreenElement) return;
 
     button = document.createElement('button');
     button.id = BUTTON_ID;
     button.textContent = '铺满全屏';
+
     Object.assign(button.style, {
-      position: 'fixed',
+      position: 'absolute',
       bottom: '20px',
-      right: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
       padding: '10px 16px',
       fontSize: '16px',
-      zIndex: 999999,
+      zIndex: 9999,
       cursor: 'pointer',
       background: 'rgba(0,0,0,0.6)',
       color: 'white',
       border: 'none',
       borderRadius: '5px',
       userSelect: 'none',
-      transition: 'background-color 0.3s ease',
-    });
-
-    button.addEventListener('mouseenter', () => {
-      button.style.background = 'rgba(0,0,0,0.8)';
-    });
-    button.addEventListener('mouseleave', () => {
-      button.style.background = 'rgba(0,0,0,0.6)';
     });
 
     button.addEventListener('click', togglePillarMode);
-
-    document.body.appendChild(button);
+    fullscreenElement.appendChild(button);
   }
 
-  // 移除按钮
   function removeButton() {
-    if (button) {
+    if (button && button.parentNode) {
       button.removeEventListener('click', togglePillarMode);
-      button.remove();
-      button = null;
-      isPillarMode = false;
-      resetFullscreenElementStyle();
+      button.parentNode.removeChild(button);
     }
+    button = null;
+    isPillarMode = false;
+    resetFullscreenElementStyle();
   }
 
-  // 设置播放器铺满宽度（左右撑满）
   function setPillarModeStyle() {
     if (!fullscreenElement) return;
-    // 让元素宽度铺满屏幕宽度，高度按视频比例自动，或者100%撑满高度也可以
     fullscreenElement.style.width = '100vw';
-    fullscreenElement.style.height = 'auto';
-    fullscreenElement.style.maxHeight = '100vh';
-    fullscreenElement.style.objectFit = 'contain'; // 保持比例并撑满宽度
+    fullscreenElement.style.height = '100vh';
+    fullscreenElement.style.objectFit = 'contain';
   }
 
-  // 还原播放器样式
   function resetFullscreenElementStyle() {
     if (!fullscreenElement) return;
     fullscreenElement.style.width = '';
     fullscreenElement.style.height = '';
-    fullscreenElement.style.maxHeight = '';
     fullscreenElement.style.objectFit = '';
   }
 
-  // 切换铺满和还原
   function togglePillarMode() {
     if (!fullscreenElement) return;
     if (isPillarMode) {
@@ -88,20 +72,23 @@
     }
   }
 
-  // 监听全屏变化
   function onFullscreenChange() {
     fullscreenElement = document.fullscreenElement;
 
-    if (fullscreenElement && isLandscape()) {
-      // 进入横屏全屏，创建按钮
-      createButton();
+    if (fullscreenElement) {
+      // 延迟 300ms，确保方向已稳定
+      setTimeout(() => {
+        if (isLandscape()) {
+          createButton();
+        } else {
+          removeButton();
+        }
+      }, 300);
     } else {
-      // 退出全屏或非横屏，移除按钮
       removeButton();
     }
   }
 
-  // 监听屏幕旋转或尺寸变化，动态判断是否需要按钮
   function onResizeOrOrientationChange() {
     if (document.fullscreenElement) {
       if (isLandscape()) {
@@ -112,7 +99,6 @@
     }
   }
 
-  // 入口初始化
   function init() {
     document.addEventListener('fullscreenchange', onFullscreenChange);
     window.addEventListener('resize', onResizeOrOrientationChange);
