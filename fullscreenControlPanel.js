@@ -1,109 +1,77 @@
-(() => {
-  const BUTTON_ID = 'fullscreen-pillar-button';
-  let isPillarMode = false;
-  let button = null;
-  let fullscreenElement = null;
+(function () {
+  // 配置：监听的按钮选择器
+  const fullscreenButtonSelector = 'li.fullscreen';
 
-  function isLandscape() {
-    return window.innerWidth > window.innerHeight;
-  }
+  // 主容器进入 fullscreen 后，注入浮动按钮
+  function injectFillToggleButton(targetElement) {
+    if (document.getElementById('fill-toggle-button')) return; // 已存在则不重复添加
 
-  function createButton() {
-    if (button || !fullscreenElement) return;
-
-    button = document.createElement('button');
-    button.id = BUTTON_ID;
+    const button = document.createElement('button');
+    button.id = 'fill-toggle-button';
     button.textContent = '铺满全屏';
+    button.dataset.active = '0';
 
     Object.assign(button.style, {
-      position: 'absolute',
-      bottom: '20px',
+      position: 'fixed',
+      bottom: '12%',
       left: '50%',
       transform: 'translateX(-50%)',
-      padding: '10px 16px',
-      fontSize: '16px',
       zIndex: 9999,
-      cursor: 'pointer',
-      background: 'rgba(0,0,0,0.6)',
-      color: 'white',
+      fontSize: '16px',
+      padding: '10px 20px',
+      borderRadius: '8px',
       border: 'none',
-      borderRadius: '5px',
-      userSelect: 'none',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      color: '#fff',
+      cursor: 'pointer',
     });
 
-    button.addEventListener('click', togglePillarMode);
-    fullscreenElement.appendChild(button);
-  }
-
-  function removeButton() {
-    if (button && button.parentNode) {
-      button.removeEventListener('click', togglePillarMode);
-      button.parentNode.removeChild(button);
-    }
-    button = null;
-    isPillarMode = false;
-    resetFullscreenElementStyle();
-  }
-
-  function setPillarModeStyle() {
-    if (!fullscreenElement) return;
-    fullscreenElement.style.width = '100vw';
-    fullscreenElement.style.height = '100vh';
-    fullscreenElement.style.objectFit = 'contain';
-  }
-
-  function resetFullscreenElementStyle() {
-    if (!fullscreenElement) return;
-    fullscreenElement.style.width = '';
-    fullscreenElement.style.height = '';
-    fullscreenElement.style.objectFit = '';
-  }
-
-  function togglePillarMode() {
-    if (!fullscreenElement) return;
-    if (isPillarMode) {
-      resetFullscreenElementStyle();
-      button.textContent = '铺满全屏';
-      isPillarMode = false;
-    } else {
-      setPillarModeStyle();
-      button.textContent = '还原大小';
-      isPillarMode = true;
-    }
-  }
-
-  function onFullscreenChange() {
-    fullscreenElement = document.fullscreenElement;
-
-    if (fullscreenElement) {
-      // 延迟 300ms，确保方向已稳定
-      setTimeout(() => {
-        if (isLandscape()) {
-          createButton();
-        } else {
-          removeButton();
-        }
-      }, 300);
-    } else {
-      removeButton();
-    }
-  }
-
-  function onResizeOrOrientationChange() {
-    if (document.fullscreenElement) {
-      if (isLandscape()) {
-        if (!button) createButton();
+    button.addEventListener('click', () => {
+      const isActive = button.dataset.active === '1';
+      if (isActive) {
+        // 还原
+        targetElement.style.width = '';
+        targetElement.style.height = '';
+        targetElement.style.objectFit = '';
+        button.textContent = '铺满全屏';
+        button.dataset.active = '0';
       } else {
-        removeButton();
+        // 铺满
+        targetElement.style.width = '100vw';
+        targetElement.style.height = '100vh';
+        targetElement.style.objectFit = 'contain';
+        button.textContent = '还原大小';
+        button.dataset.active = '1';
       }
+    });
+
+    document.body.appendChild(button);
+  }
+
+  // 监听点击你页面中的“全屏”按钮
+  const setup = () => {
+    const btn = document.querySelector(fullscreenButtonSelector);
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      // 等待 fullscreen 生效后再插入按钮（避免方向未完成）
+      setTimeout(() => {
+        const fullscreenEl = document.fullscreenElement;
+        if (fullscreenEl) {
+          injectFillToggleButton(fullscreenEl);
+        }
+      }, 500); // 延时执行，确保 fullscreen 生效
+    });
+  };
+
+  // 清理按钮：退出 fullscreen 后自动移除浮层按钮
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      const btn = document.getElementById('fill-toggle-button');
+      btn?.remove();
     }
-  }
+  });
 
-  function init() {
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-    window.addEventListener('resize', onResizeOrOrientationChange);
-    window.addEventListener('orientationchange', onResizeOrOrientationChange);
-  }
-
-  init();
+  // 初始化
+  document.addEventListener('DOMContentLoaded', setup);
 })();
